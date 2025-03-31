@@ -2,7 +2,7 @@
   <div class="card content-box">
     <span class="text">
       GitHub 仓库：
-      <a href="https://github.com/HalseySpicy/Geeker-Admin" target="_blank">https://github.com/HalseySpicy/Geeker-Admin</a> 🍒🍉🍊
+      <a href="https://github.com/MEKSAAA/Anti-Fake.git" target="_blank">https://github.com/MEKSAAA/Anti-Fake.git</a> 🍒🍉🍊
     </span>
   </div>
 </template>
