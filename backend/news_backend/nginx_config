@@ -1,0 +1,13 @@
+server {
+    listen 6006;  # 修改为AutoDL可访问的端口
+    server_name _;  # 可以替换为你的域名
+
+    location / {
+        include uwsgi_params;
+        uwsgi_pass unix:/root/news_backend/news.sock;
+    }
+
+    location /static {
+        alias /root/news_backend/app/static;
+    }
+} 
