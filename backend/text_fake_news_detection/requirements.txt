@@ -22,16 +22,13 @@ duckduckgo-search>=3.8.0
 
 # ML依赖
 torch>=1.13.0
-transformers>=4.30.0
-sentence-transformers>=2.2.0
+transformers==4.35.2
+sentence-transformers==2.2.2
 faiss-cpu>=1.7.0
-nltk>=3.8.0
+nltk==3.8.1
 numpy>=1.22.0
 
 # Web服务
 flask>=2.0.0
 flask_cors>=4.0.0
-
-# 其他依赖
-nltk>=3.8.0
-numpy>=1.22.0
+tokenizers==0.15.2
