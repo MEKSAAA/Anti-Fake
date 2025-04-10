@@ -24,23 +24,12 @@ news_backend/
 
 ## 使用步骤
 
-### 1. 初始化和运行数据库(测试，不重要)
+### 1. 初始化和运行数据库
 
 ```bash
 # 激活虚拟环境
 source venv/bin/activate
-
-# 创建数据库表
-python create_db.py
-
-# 添加示例数据
-python seed_data.py
-
-# 查询数据(使用ORM)
-python query_db.py
-
-# 直接查询MySQL数据库
-python query_mysql.py
+service mysql start
 ```
 
 ### 2. 运行Flask应用(localhost:5000)
@@ -67,8 +56,4 @@ uwsgi --stop /root/news_backend/uwsgi.pid
 sudo ln -sf /root/news_backend/nginx_config /etc/nginx/sites-available/news_app
 sudo ln -sf /etc/nginx/sites-available/news_app /etc/nginx/sites-enabled/
 sudo service nginx restart
-```
-
-### 4. 测试API(测试，不重要)
-
 ```
