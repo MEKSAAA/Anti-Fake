@@ -20,7 +20,7 @@
     </el-form-item>
   </el-form>
   <div class="login-btn">
-    <el-button :icon="CircleClose" round size="large" @click="resetForm(loginFormRef)"> 重置 </el-button>
+    <el-button :icon="CirclePlus" round size="large" @click="goToRegister()"> 注册 </el-button>
     <el-button :icon="UserFilled" round size="large" type="primary" :loading="loading" @click="login(loginFormRef)">
       登录
     </el-button>
@@ -39,7 +39,7 @@ import { useUserStore } from "@/stores/modules/user";
 import { useTabsStore } from "@/stores/modules/tabs";
 import { useKeepAliveStore } from "@/stores/modules/keepAlive";
 import { initDynamicRouter } from "@/routers/modules/dynamicRouter";
-import { CircleClose, UserFilled } from "@element-plus/icons-vue";
+import { CirclePlus, UserFilled } from "@element-plus/icons-vue";
 import type { ElForm } from "element-plus";
 import md5 from "md5";
 
@@ -87,10 +87,9 @@ const login = (formEl: FormInstance | undefined) => {
   });
 };
 
-// resetForm
-const resetForm = (formEl: FormInstance | undefined) => {
-  if (!formEl) return;
-  formEl.resetFields();
+// goToRegister
+const goToRegister = () => {
+  router.push("/register");
 };
 
 onMounted(() => {
