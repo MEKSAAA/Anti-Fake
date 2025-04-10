@@ -22,7 +22,7 @@
       right: 18px;
     }
     .login-left {
-      width: 800px;
+      width: 700px;
       margin-right: 10px;
       .login-left-img {
         width: 100%;
@@ -30,7 +30,7 @@
       }
     }
     .login-form {
-      width: 420px;
+      width: 450px;
       padding: 50px 40px 45px;
       background-color: var(--el-bg-color);
       border-radius: 10px;
@@ -73,6 +73,12 @@
 @media screen and (width <= 1250px) {
   .login-left {
     display: none;
+  }
+}
+
+@media screen and (width > 1250px) {
+  .login-form {
+    transform: translateX(-70px);
   }
 }
 

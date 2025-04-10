@@ -18,6 +18,14 @@ export const staticRouter: RouteRecordRaw[] = [
     }
   },
   {
+    path: "/register",
+    name: "register",
+    component: () => import("@/views/register/index.vue"),
+    meta: {
+      title: "注册"
+    }
+  },
+  {
     path: "/layout",
     name: "layout",
     component: () => import("@/layouts/index.vue"),
