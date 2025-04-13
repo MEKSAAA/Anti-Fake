@@ -24,7 +24,7 @@
         "title": "文本检测",
         "isLink": "",
         "isHide": false,
-        "isFull": true,
+        "isFull": false,
         "isAffix": false,
         "isKeepAlive": true
       }
