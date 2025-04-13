@@ -3,9 +3,12 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_mail import Mail
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # 初始化Flask应用
 app = Flask(__name__)
+# print("MAIL_PASSWORD from env:", os.environ.get("MAIL_PASSWORD"))
 
 # 配置数据库连接
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password@localhost/news_db'
