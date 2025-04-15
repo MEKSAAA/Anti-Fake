@@ -21,3 +21,7 @@ tomli==2.2.1
 typing_extensions==4.13.1
 Werkzeug==3.0.6
 zipp==3.20.2
+openai==1.35.8
+docx2txt==0.8
+PyPDF2==3.0.1
+python-dotenv==1.0.1
