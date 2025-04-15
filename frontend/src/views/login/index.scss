@@ -54,13 +54,14 @@
         }
       }
       .el-form-item {
+        margin-top: 20px;
         margin-bottom: 40px;
       }
       .login-btn {
         display: flex;
         justify-content: space-between;
         width: 100%;
-        margin-top: 40px;
+        margin-top: 10px;
         white-space: nowrap;
         .el-button {
           width: 185px;

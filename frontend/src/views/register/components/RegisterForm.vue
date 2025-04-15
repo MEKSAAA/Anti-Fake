@@ -5,9 +5,6 @@
 
   <div class="avatar-section">
     <img :src="avatarUrl" alt="默认头像" class="avatar-image" />
-    <el-upload class="upload-avatar" :show-file-list="false" :before-upload="handleAvatarChange">
-      <el-button type="primary" size="default">更换头像</el-button>
-    </el-upload>
   </div>
 
   <el-form ref="registerFormRef" :model="registerForm" :rules="registerRules" size="large">
@@ -30,7 +27,7 @@
     <el-form-item prop="code">
       <el-input v-model="registerForm.code" placeholder="请输入验证码">
         <template #prefix>
-          <el-icon><Message /></el-icon>
+          <el-icon><ChatDotRound /></el-icon>
         </template>
         <template #append>
           <el-button :disabled="countdown > 0" @click="sendCode">{{
@@ -55,7 +52,7 @@
       :icon="Check"
       type="primary"
       :loading="loading"
-      @click="register(registerFormRef)"
+      @click="register(registerForm)"
       round
       size="large"
       style="width: 180px"
@@ -81,26 +78,6 @@ const router = useRouter();
 const loading = ref(false);
 const registerFormRef = ref<FormInstance>();
 
-// 上传头像处理
-const handleAvatarChange = (file: File) => {
-  const isImage = file.type.startsWith("image/");
-  if (!isImage) {
-    ElMessage.error("只能上传图片文件！");
-    return false;
-  }
-
-  // 显示预览
-  const reader = new FileReader();
-  reader.onload = e => {
-    avatarUrl.value = e.target?.result as string;
-  };
-  reader.readAsDataURL(file);
-
-  // 模拟上传成功
-  ElMessage.success("头像上传成功！");
-  return false; // 阻止自动上传，改为自定义处理
-};
-
 const registerForm = reactive({
   username: "",
   email: "",
@@ -115,44 +92,75 @@ const registerRules = reactive({
   code: [{ required: true, message: "请输入验证码", trigger: "blur" }]
 });
 
-// 验证码倒计时
 const countdown = ref(0);
-let timer: ReturnType<typeof setInterval>; // 修正 timer 类型
+let timer: ReturnType<typeof setInterval>;
 
-const sendCode = () => {
+const sendCode = async () => {
   if (!registerForm.email) {
     ElMessage.warning("请先输入邮箱哦～📮");
     return;
   }
 
-  // 模拟发送验证码
-  ElMessage.success("验证码已发送！🎉（假的）");
+  try {
+    const response = await fetch("http://localhost:6006/auth/send_code", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email: registerForm.email })
+    });
 
-  countdown.value = 60;
-  clearInterval(timer); // 清除旧的定时器
-  timer = setInterval(() => {
-    countdown.value--;
-    if (countdown.value <= 0) {
+    const result = await response.json();
+
+    if (result.success) {
+      ElMessage.success(result.message || "验证码已发送！");
+
+      countdown.value = 60;
       clearInterval(timer);
+      timer = setInterval(() => {
+        countdown.value--;
+        if (countdown.value <= 0) clearInterval(timer);
+      }, 1000);
+    } else {
+      ElMessage.error(result.message || "发送验证码失败！");
     }
-  }, 1000);
+  } catch (error) {
+    console.error("发送验证码异常：", error);
+    ElMessage.error("发送验证码失败，请检查网络或服务器状态！");
+  }
 };
 
-const register = async (formEl: FormInstance | undefined) => {
-  if (!formEl) return;
-  formEl.validate(async valid => {
-    if (!valid) return;
-    loading.value = true;
-    try {
-      // await registerApi({ ...registerForm, password: md5(registerForm.password) });
-      ElMessage.success("注册成功！（假装成功了😎）");
+const register = async (form: { username: string; email: string; password: string; code: string }) => {
+  try {
+    const response = await fetch("http://localhost:6006/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        username: form.username,
+        email: form.email,
+        password: form.password,
+        verification_code: form.code
+      })
+    });
+
+    // 处理服务器响应
+    const data = await response.json();
+
+    if (response.ok) {
+      // 注册成功
+      ElMessage.success(data.message);
+      console.log("注册成功", data.user);
       router.push("/login");
-    } catch (err) {
-      ElMessage.error("注册失败！");
-    } finally {
-      loading.value = false;
+    } else {
+      // 注册失败
+      ElMessage.error(data.message || "注册失败，请重试！");
     }
-  });
+  } catch (error) {
+    ElMessage.error("网络错误，无法连接到服务器！");
+    console.error("注册异常:", error);
+  }
 };
 
 const goToLogin = () => {
@@ -181,10 +189,6 @@ const goToLogin = () => {
   object-fit: cover;
   border: 2px solid #dcdfe6;
   margin-bottom: 10px;
-}
-
-.upload-avatar .el-button {
-  margin-top: 10px;
 }
 
 .el-form {
