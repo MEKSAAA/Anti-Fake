@@ -2,7 +2,8 @@ import { createRouter, createWebHashHistory, createWebHistory } from "vue-router
 // import { useUserStore } from "@/stores/modules/user";
 import { useAuthStore } from "@/stores/modules/auth";
 // import { LOGIN_URL, ROUTER_WHITE_LIST } from "@/config";
-// import { initDynamicRouter } from "@/routers/modules/dynamicRouter";
+import { ROUTER_WHITE_LIST } from "@/config";
+import { initDynamicRouter } from "@/routers/modules/dynamicRouter";
 import { staticRouter, errorRouter } from "@/routers/modules/staticRouter";
 import NProgress from "@/config/nprogress";
 
@@ -42,7 +43,7 @@ const router = createRouter({
  * */
 router.beforeEach(async (to, from, next) => {
   // const userStore = useUserStore();
-  // const authStore = useAuthStore();
+  const authStore = useAuthStore();
 
   // 1.NProgress 开始
   NProgress.start();
@@ -59,19 +60,19 @@ router.beforeEach(async (to, from, next) => {
   // }
 
   // // 4.判断访问页面是否在路由白名单地址(静态路由)中，如果存在直接放行
-  // if (ROUTER_WHITE_LIST.includes(to.path)) return next();
+  if (ROUTER_WHITE_LIST.includes(to.path)) return next();
 
   // // 5.判断是否有 Token，没有重定向到 login 页面
   // if (!userStore.token) return next({ path: LOGIN_URL, replace: true });
 
   // // 6.如果没有菜单列表，就重新请求菜单列表并添加动态路由
-  // if (!authStore.authMenuListGet.length) {
-  //   await initDynamicRouter();
-  //   return next({ ...to, replace: true });
-  // }
+  if (!authStore.authMenuListGet.length) {
+    await initDynamicRouter();
+    return next({ ...to, replace: true });
+  }
 
   // // 7.存储 routerName 做按钮权限筛选
-  // authStore.setRouteName(to.name as string);
+  authStore.setRouteName(to.name as string);
 
   // 8.正常访问页面
   next();

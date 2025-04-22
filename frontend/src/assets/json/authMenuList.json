@@ -138,7 +138,7 @@
         "title": "多模态检测",
         "isLink": "",
         "isHide": false,
-        "isFull": true,
+        "isFull": false,
         "isAffix": false,
         "isKeepAlive": true
       }
