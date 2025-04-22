@@ -32,6 +32,7 @@ import I18n from "@/languages/index";
 import pinia from "@/stores";
 // errorHandler
 import errorHandler from "@/utils/errorHandler";
+import { useUserInfoStore } from "@/stores/modules/userInfo";
 
 const app = createApp(App);
 
@@ -43,3 +44,9 @@ Object.keys(Icons).forEach(key => {
 });
 
 app.use(ElementPlus).use(directives).use(router).use(I18n).use(pinia).mount("#app");
+
+const userInfoStore = useUserInfoStore();
+const localUser = localStorage.getItem("user-info");
+if (localUser) {
+  userInfoStore.setUserInfo(JSON.parse(localUser));
+}

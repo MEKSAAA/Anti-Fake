@@ -148,12 +148,14 @@ const handleLogin = async () => {
     if (response.ok) {
       await initDynamicRouter();
       ElMessage.success(data.message || "登录成功！");
-      const userInfoStore = useUserInfoStore();
-      userInfoStore.setUserInfo({
+      const userData = {
         email: data.data.user.email,
         user_id: data.data.user.user_id,
         username: data.data.user.username
-      });
+      };
+      const userInfoStore = useUserInfoStore();
+      userInfoStore.setUserInfo(userData);
+      localStorage.setItem("user-info", JSON.stringify(userData));
       router.push("/layout");
     } else {
       ElMessage.error(data.message || "登录失败");

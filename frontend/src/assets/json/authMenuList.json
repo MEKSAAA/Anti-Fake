@@ -188,48 +188,18 @@
       ]
     },
     {
-      "path": "/system",
-      "name": "system",
-      "redirect": "/system/accountManage",
+      "path": "/history/index",
+      "name": "shistory",
+      "component": "/history/index",
       "meta": {
         "icon": "Tools",
-        "title": "设置",
+        "title": "历史记录",
         "isLink": "",
         "isHide": false,
         "isFull": false,
         "isAffix": false,
         "isKeepAlive": true
-      },
-      "children": [
-        {
-          "path": "/system/accountManage",
-          "name": "accountManage",
-          "component": "/system/accountManage/index",
-          "meta": {
-            "icon": "Menu",
-            "title": "账号管理",
-            "isLink": "",
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        },
-        {
-          "path": "/system/roleManage",
-          "name": "roleManage",
-          "component": "/system/roleManage/index",
-          "meta": {
-            "icon": "Menu",
-            "title": "其他设置",
-            "isLink": "",
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        }
-      ]
+      }
     }
   ],
   "msg": "成功"
