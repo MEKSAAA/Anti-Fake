@@ -62,6 +62,7 @@ import { useRouter } from "vue-router";
 import { ElMessage, ElForm } from "element-plus";
 import { CirclePlus, UserFilled, Lock, Message, User } from "@element-plus/icons-vue";
 import { initDynamicRouter } from "@/routers/modules/dynamicRouter";
+import { useUserInfoStore } from "@/stores/modules/userInfo";
 
 const router = useRouter();
 const loginFormRef = ref<InstanceType<typeof ElForm>>();
@@ -147,6 +148,12 @@ const handleLogin = async () => {
     if (response.ok) {
       await initDynamicRouter();
       ElMessage.success(data.message || "登录成功！");
+      const userInfoStore = useUserInfoStore();
+      userInfoStore.setUserInfo({
+        email: data.data.user.email,
+        user_id: data.data.user.user_id,
+        username: data.data.user.username
+      });
       router.push("/layout");
     } else {
       ElMessage.error(data.message || "登录失败");
