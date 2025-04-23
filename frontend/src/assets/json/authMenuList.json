@@ -20,7 +20,7 @@
       "name": "text",
       "component": "/identify/text",
       "meta": {
-        "icon": "Tickets",
+        "icon": "DocumentChecked",
         "title": "文本检测",
         "isLink": "",
         "isHide": false,
@@ -34,7 +34,7 @@
       "name": "echarts",
       "redirect": "/echarts/waterChart",
       "meta": {
-        "icon": "TrendCharts",
+        "icon": "Picture",
         "title": "图片检测",
         "isLink": "",
         "isHide": false,
@@ -134,7 +134,7 @@
       "name": "multimodal",
       "component": "/identify/multimodal",
       "meta": {
-        "icon": "Odometer",
+        "icon": "Connection",
         "title": "多模态检测",
         "isLink": "",
         "isHide": false,
@@ -148,7 +148,7 @@
       "name": "menu",
       "redirect": "/menu/menu1",
       "meta": {
-        "icon": "List",
+        "icon": "DataAnalysis",
         "title": "新闻优化",
         "isLink": "",
         "isHide": false,
@@ -162,7 +162,7 @@
           "name": "menu1",
           "component": "/menu/menu1/index",
           "meta": {
-            "icon": "Menu",
+            "icon": "ChatLineSquare",
             "title": "标题生成",
             "isLink": "",
             "isHide": false,
@@ -176,7 +176,7 @@
           "name": "menu3",
           "component": "/menu/menu3/index",
           "meta": {
-            "icon": "Menu",
+            "icon": "Edit",
             "title": "文本优化",
             "isLink": "",
             "isHide": false,
@@ -192,7 +192,7 @@
       "name": "shistory",
       "component": "/history/index",
       "meta": {
-        "icon": "Tools",
+        "icon": "Memo",
         "title": "历史记录",
         "isLink": "",
         "isHide": false,
