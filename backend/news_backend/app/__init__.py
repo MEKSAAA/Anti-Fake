@@ -4,14 +4,18 @@ from flask_marshmallow import Marshmallow
 from flask_mail import Mail
 import os
 from dotenv import load_dotenv
+from flask import Flask
+from flask_cors import CORS
+
 load_dotenv()
 
 # 初始化Flask应用
 app = Flask(__name__)
+CORS(app)
 # print("MAIL_PASSWORD from env:", os.environ.get("MAIL_PASSWORD"))
 
 # 配置数据库连接
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password@localhost/news_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password@127.0.0.1/news_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 app.config['MAIL_SERVER'] = 'smtp.qq.com'
@@ -34,7 +38,9 @@ mail = Mail(app)
 from app.api.auth import auth
 app.register_blueprint(auth, url_prefix='/auth')
 
-    
+# 导入蓝图
+from app.api.news_detection import news_detection_bp
+app.register_blueprint(news_detection_bp, url_prefix='/news_detection')
 
 
 
