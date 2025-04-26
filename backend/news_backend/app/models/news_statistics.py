@@ -4,12 +4,11 @@ from datetime import datetime
 class NewsStatistics(db.Model):
     __tablename__ = 'news_statistics'
     
-    statistic_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     total_news_count = db.Column(db.Integer, default=0)
     total_fake_count = db.Column(db.Integer, default=0)
     total_real_count = db.Column(db.Integer, default=0)
     total_users = db.Column(db.Integer, default=0)
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow, primary_key=True)
     
     def __init__(self, total_news_count=0, total_fake_count=0, 
                  total_real_count=0, total_users=0):
@@ -21,8 +20,7 @@ class NewsStatistics(db.Model):
 class NewsStatisticsByUser(db.Model):
     __tablename__ = 'news_statistics_by_user'
     
-    statistic_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), primary_key=True)
     total_news_count = db.Column(db.Integer, default=0)
     total_fake_count = db.Column(db.Integer, default=0)
     total_real_count = db.Column(db.Integer, default=0)
@@ -37,12 +35,12 @@ class NewsStatisticsByUser(db.Model):
 # 创建Schema
 class NewsStatisticsSchema(ma.Schema):
     class Meta:
-        fields = ('statistic_id', 'total_news_count', 'total_fake_count',
+        fields = ('total_news_count', 'total_fake_count',
                   'total_real_count', 'total_users', 'last_updated')
 
 class NewsStatisticsByUserSchema(ma.Schema):
     class Meta:
-        fields = ('statistic_id', 'user_id', 'total_news_count',
+        fields = ('user_id', 'total_news_count',
                   'total_fake_count', 'total_real_count', 'last_updated')
 
 # 初始化schema

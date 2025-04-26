@@ -7,26 +7,10 @@ import random
 import string
 from datetime import datetime, timedelta
 import hashlib
-
+from .utils import api_response
 auth = Blueprint('auth', __name__)
 
 verification_codes = {}
-
-def api_response(success=True, message="", data=None, status_code=200):
-    """
-    统一API响应格式
-    
-    Args:
-        success: 是否成功
-        message: 提示信息
-        data: 响应数据
-        status_code: HTTP状态码
-    """
-    return jsonify({
-        "success": success,
-        "message": message,
-        "data": data
-    }), status_code
 
 # 发送验证码的路由
 @auth.route('/send_code', methods=['POST'])
@@ -42,7 +26,10 @@ def send_code():
         return api_response(False, "请输入QQ邮箱", status_code=400)
         
     if verification_codes.get(email):
-        return api_response(False, "请勿重复发送验证码", status_code=400)
+        if datetime.now() > verification_codes[email]['expires']:
+            del verification_codes[email]
+        else:
+            return api_response(False, "请勿重复发送验证码", status_code=400)        
         
     # 生成6位随机验证码
     code = ''.join(random.choices(string.digits, k=6))
