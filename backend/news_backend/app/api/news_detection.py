@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from app import db
 from app.models.news_detection import NewsDetectionHistory, news_detection_schema
+
 import os
 from werkzeug.utils import secure_filename
 import json

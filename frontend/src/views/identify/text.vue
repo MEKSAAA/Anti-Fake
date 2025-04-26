@@ -44,18 +44,46 @@
       </div>
       <div class="result-content">
         <div v-if="!resultText" class="no-content">还未上传内容！</div>
-        <div v-else class="result-text">{{ resultText }}</div>
+        <div v-else class="result-text">
+          <div class="result-item">
+            <span class="result-label">检测结果：</span>
+            <span :class="['result-value', resultData.is_fake ? 'fake' : 'real']">
+              {{ resultData.is_fake ? "虚假信息" : "真实信息" }}
+            </span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">判断理由：</span>
+            <span class="result-value">{{ resultData.reason }}</span>
+          </div>
+          <div v-if="resultData.related_links && resultData.related_links.length > 0" class="result-item">
+            <span class="result-label">相关链接：</span>
+            <div class="related-links">
+              <a v-for="(link, index) in resultData.related_links" :key="index" :href="link" target="_blank" class="link-item">
+                {{ link }}
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="action-button">
-        <el-button class="ai-detect-btn" @click="detectText">AI检测</el-button>
+        <el-button class="ai-detect-btn" @click="isDetected ? clearDetection() : detectText()" :disabled="isLoading">
+          {{ isLoading ? "正在检测中..." : isDetected ? "清空检测结果以重新检测" : "AI检测" }}
+        </el-button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import axios from "axios";
 import { ElMessage } from "element-plus";
 import { reactive, ref } from "vue";
+
+// 创建axios实例
+const api = axios.create({
+  baseURL: "http://localhost:6006",
+  timeout: 30000
+});
 
 const activeMethod = ref("input");
 const form = reactive({
@@ -63,11 +91,17 @@ const form = reactive({
 });
 const uploadFile = ref(null);
 const resultText = ref("");
+const resultData = ref({
+  is_fake: false,
+  reason: "",
+  related_links: []
+});
+const isLoading = ref(false);
+const isDetected = ref(false);
 
 const setActiveMethod = method => {
   activeMethod.value = method;
 };
-
 const handleFileChange = file => {
   uploadFile.value = file.raw;
 };
@@ -96,13 +130,59 @@ const submitUpload = async () => {
   }
 };
 
-const detectText = () => {
-  if (!form.text) {
+const detectText = async () => {
+  if (!form.text && !uploadFile.value) {
     ElMessage.warning("请先输入或上传文本");
     return;
   }
-  resultText.value = `检测结果：该新闻文本真实可信度为98.5%，未发现明显虚假信息特征。`;
-  ElMessage.success("检测完成");
+
+  isLoading.value = true;
+  resultText.value = "";
+  isDetected.value = false;
+
+  try {
+    const formData = new FormData();
+    formData.append("user_id", "1");
+    if (activeMethod.value === "input" && form.text) {
+      formData.append("content", form.text);
+    } else if (activeMethod.value === "upload" && uploadFile.value) {
+      formData.append("file", uploadFile.value);
+    }
+    const response = await api.post("/news_detection/text-detection", formData);
+
+    if (response.data.success) {
+      resultData.value = {
+        is_fake: response.data.data.is_fake,
+        reason: response.data.data.reason,
+        related_links: response.data.data.related_links
+      };
+      resultText.value = "检测完成";
+      isDetected.value = true;
+      ElMessage.success("检测完成");
+    } else {
+      ElMessage.error(response.data.message || "检测失败");
+      isDetected.value = false;
+    }
+  } catch (error) {
+    console.error("检测错误:", error);
+    ElMessage.error("检测失败，请重试");
+    isDetected.value = false;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const clearDetection = () => {
+  form.text = "";
+  uploadFile.value = null;
+  resultText.value = "";
+  resultData.value = {
+    is_fake: false,
+    reason: "",
+    related_links: []
+  };
+  isDetected.value = false;
+  ElMessage.success("已清空检测结果");
 };
 </script>
 
@@ -278,29 +358,54 @@ const detectText = () => {
   padding: 12px 40px;
   border: none;
   border-radius: 4px;
+  min-width: 120px;
 }
 
 .ai-detect-btn:hover {
   background-color: #48a5a6;
 }
 
-:deep(.el-textarea__inner) {
-  border: none;
-  resize: none;
+.ai-detect-btn:disabled {
+  background-color: #c0c4cc;
+  color: #fff;
+  cursor: not-allowed;
 }
 
-:deep(.el-textarea__inner):focus {
-  box-shadow: none;
+.result-item {
+  margin-bottom: 15px;
 }
 
-:deep(.el-upload) {
-  width: 100%;
-  height: 100%;
+.result-label {
+  font-weight: bold;
+  color: #333;
+  margin-right: 10px;
 }
 
-:deep(.el-upload-dragger) {
-  width: 100%;
-  height: 100%;
-  border: none;
+.result-value {
+  color: #666;
+}
+
+.result-value.fake {
+  color: #f56c6c;
+}
+
+.result-value.real {
+  color: #67c23a;
+}
+
+.related-links {
+  margin-top: 10px;
+}
+
+.link-item {
+  display: block;
+  color: #54bcbd;
+  text-decoration: none;
+  margin-bottom: 5px;
+  word-break: break-all;
+}
+
+.link-item:hover {
+  text-decoration: underline;
 }
 </style>
