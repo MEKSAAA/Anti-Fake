@@ -3,10 +3,6 @@
     <img src="@/assets/images/logo_with_name.png" alt="Logo" class="logo-image" />
   </div>
 
-  <div class="avatar-section">
-    <img :src="avatarUrl" alt="默认头像" class="avatar-image" />
-  </div>
-
   <el-form ref="registerFormRef" :model="registerForm" :rules="registerRules" size="large">
     <el-form-item prop="username">
       <el-input v-model="registerForm.username" placeholder="请输入用户名">
@@ -44,6 +40,14 @@
         </template>
       </el-input>
     </el-form-item>
+
+    <el-form-item prop="confirmPassword">
+      <el-input v-model="registerForm.confirmPassword" type="password" placeholder="请确认密码" show-password>
+        <template #prefix>
+          <el-icon><Lock /></el-icon>
+        </template>
+      </el-input>
+    </el-form-item>
   </el-form>
 
   <div class="buttons">
@@ -68,9 +72,6 @@ import { useRouter } from "vue-router";
 import type { ElForm } from "element-plus";
 import { User, Lock, Message, Check, Back } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
-import defaultAvatar from "@/assets/images/default_avatar.png";
-
-const avatarUrl = ref<string>(defaultAvatar);
 
 type FormInstance = InstanceType<typeof ElForm>;
 
@@ -82,13 +83,27 @@ const registerForm = reactive({
   username: "",
   email: "",
   password: "",
+  confirmPassword: "",
   code: ""
 });
+
+const validateConfirmPassword = (rule: any, value: string, callback: any) => {
+  if (!value) {
+    callback(new Error("请确认密码")); // 为空
+  } else if (value.length < 6) {
+    callback(new Error("密码长度至少6位"));
+  } else if (value !== registerForm.password) {
+    callback(new Error("两次输入的密码不一致！")); // 和密码不一样
+  } else {
+    callback(); // 成功
+  }
+};
 
 const registerRules = reactive({
   username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
   email: [{ required: true, message: "请输入邮箱", trigger: "blur" }],
   password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+  confirmPassword: [{ validator: validateConfirmPassword, trigger: "blur" }],
   code: [{ required: true, message: "请输入验证码", trigger: "blur" }]
 });
 
@@ -97,9 +112,11 @@ let timer: ReturnType<typeof setInterval>;
 
 const sendCode = async () => {
   if (!registerForm.email) {
-    ElMessage.warning("请先输入邮箱哦～📮");
+    ElMessage.warning("请先输入邮箱📮");
     return;
   }
+
+  clearInterval(timer);
 
   try {
     const response = await fetch("http://localhost:6006/auth/send_code", {
@@ -130,7 +147,19 @@ const sendCode = async () => {
   }
 };
 
-const register = async (form: { username: string; email: string; password: string; code: string }) => {
+const register = async (form: { username: string; email: string; password: string; confirmPassword: string; code: string }) => {
+  if (!registerFormRef.value) return;
+
+  try {
+    await registerFormRef.value.validate(); // 如果validate失败，会抛异常，直接跳catch，不会往下执行
+  } catch (validateError) {
+    console.warn("表单校验未通过❌", validateError);
+    ElMessage.warning("请完善表单信息🌟");
+    return; // ❗重要！校验失败后，直接return，不要继续请求接口
+  }
+
+  loading.value = true;
+
   try {
     const response = await fetch("http://localhost:6006/auth/register", {
       method: "POST",
@@ -145,21 +174,20 @@ const register = async (form: { username: string; email: string; password: strin
       })
     });
 
-    // 处理服务器响应
     const data = await response.json();
 
     if (response.ok) {
-      // 注册成功
       ElMessage.success(data.message);
       console.log("注册成功", data.user);
       router.push("/login");
     } else {
-      // 注册失败
       ElMessage.error(data.message || "注册失败，请重试！");
     }
   } catch (error) {
-    ElMessage.error("网络错误，无法连接到服务器！");
     console.error("注册异常:", error);
+    ElMessage.error("网络错误，无法连接到服务器！");
+  } finally {
+    loading.value = false;
   }
 };
 

@@ -88,7 +88,7 @@ let timer: ReturnType<typeof setInterval>;
 
 const sendCode = async () => {
   if (!loginForm.email) {
-    ElMessage.warning("请先输入邮箱哦～📮");
+    ElMessage.warning("请先输入邮箱📮");
     return;
   }
 
@@ -148,14 +148,18 @@ const handleLogin = async () => {
     if (response.ok) {
       await initDynamicRouter();
       ElMessage.success(data.message || "登录成功！");
-      const userData = {
-        email: data.data.user.email,
-        user_id: data.data.user.user_id,
-        username: data.data.user.username
-      };
+      let { user_id, email, username, avatar } = data.data.user;
+
+      // 如果 avatar 是 null 或者 "none"，就用默认头像
+      if (!avatar || avatar === "none") {
+        avatar = new URL("@/assets/images/default_avatar.png", import.meta.url).href;
+      }
+
+      const userData = { email, user_id, username, avatar };
       const userInfoStore = useUserInfoStore();
       userInfoStore.setUserInfo(userData);
       localStorage.setItem("user-info", JSON.stringify(userData));
+
       router.push("/layout");
     } else {
       ElMessage.error(data.message || "登录失败");
