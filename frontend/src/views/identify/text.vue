@@ -75,6 +75,7 @@
 </template>
 
 <script setup>
+import { useUserStore } from "@/stores/modules/user";
 import axios from "axios";
 import { ElMessage } from "element-plus";
 import { reactive, ref } from "vue";
@@ -84,6 +85,8 @@ const api = axios.create({
   baseURL: "http://localhost:6006",
   timeout: 30000
 });
+
+const userStore = useUserStore();
 
 const activeMethod = ref("input");
 const form = reactive({
@@ -142,7 +145,7 @@ const detectText = async () => {
 
   try {
     const formData = new FormData();
-    formData.append("user_id", "1");
+    formData.append("user_id", userStore.userInfo.user_id);
     if (activeMethod.value === "input" && form.text) {
       formData.append("content", form.text);
     } else if (activeMethod.value === "upload" && uploadFile.value) {
