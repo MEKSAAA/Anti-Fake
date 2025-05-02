@@ -155,7 +155,7 @@ const register = async (form: { username: string; email: string; password: strin
   } catch (validateError) {
     console.warn("表单校验未通过❌", validateError);
     ElMessage.warning("请完善表单信息🌟");
-    return; // ❗重要！校验失败后，直接return，不要继续请求接口
+    return; // 校验失败后，直接return，不要继续请求接口
   }
 
   loading.value = true;
