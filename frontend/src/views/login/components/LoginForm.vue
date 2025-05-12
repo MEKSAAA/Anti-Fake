@@ -57,12 +57,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onBeforeUnmount } from "vue";
+import { CirclePlus, Lock, Message, User, UserFilled } from "@element-plus/icons-vue";
+import { ElForm, ElMessage } from "element-plus";
+import { onBeforeUnmount, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
-import { ElMessage, ElForm } from "element-plus";
-import { CirclePlus, UserFilled, Lock, Message, User } from "@element-plus/icons-vue";
-import { initDynamicRouter } from "@/routers/modules/dynamicRouter";
-import { useUserInfoStore } from "@/stores/modules/userInfo";
 
 const router = useRouter();
 const loginFormRef = ref<InstanceType<typeof ElForm>>();
