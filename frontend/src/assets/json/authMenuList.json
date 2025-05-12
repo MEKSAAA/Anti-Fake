@@ -172,6 +172,20 @@
           }
         },
         {
+          "path": "/menu/menu4",
+          "name": "menu4",
+          "component": "/menu/menu4/index",
+          "meta": {
+            "icon": "CopyDocument",
+            "title": "图片生成",
+            "isLink": "",
+            "isHide": false,
+            "isFull": false,
+            "isAffix": false,
+            "isKeepAlive": true
+          }
+        },
+        {
           "path": "/menu/menu3",
           "name": "menu3",
           "component": "/menu/menu3/index",
