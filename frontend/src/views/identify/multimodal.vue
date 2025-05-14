@@ -19,8 +19,13 @@
           class="upload-area"
         >
           <div class="upload-content">
-            <img src="@/assets/icons/upload.svg" class="upload-icon" />
-            <div class="upload-text">点击或拖拽图片到此处上传</div>
+            <template v-if="!imagePreview">
+              <img src="@/assets/icons/upload.svg" class="upload-icon" />
+              <div class="upload-text">点击或拖拽图片到此处上传</div>
+            </template>
+            <template v-else>
+              <img :src="imagePreview" class="preview-image" />
+            </template>
             <div v-if="uploadFile" class="file-info">
               <span>已选择文件: {{ uploadFile.name }}</span>
               <el-button type="primary" size="small" @click.stop="submitUpload">上传</el-button>
@@ -44,9 +49,21 @@
               {{ resultData.is_fake ? "虚假信息" : "真实信息" }}
             </span>
           </div>
-          <div class="result-item">
+          <div v-if="resultData.is_fake" class="result-item">
             <span class="result-label">判断理由：</span>
             <span class="result-value">{{ resultData.reason }}</span>
+          </div>
+          <div v-if="resultData.fake_probability > 0" class="result-item">
+            <span class="result-label">虚假概率：</span>
+            <span class="result-value">{{ (resultData.fake_probability * 100).toFixed(2) }}%</span>
+          </div>
+          <div v-if="resultData.manipulation_types && resultData.manipulation_types.length > 0" class="result-item">
+            <span class="result-label">篡改类型：</span>
+            <span class="result-value">{{ resultData.manipulation_types.join(", ") }}</span>
+          </div>
+          <div v-if="resultData.fake_words && resultData.fake_words.length > 0" class="result-item">
+            <span class="result-label">可疑词语：</span>
+            <span class="result-value">{{ resultData.fake_words.join(", ") }}</span>
           </div>
           <div v-if="resultData.related_links && resultData.related_links.length > 0" class="result-item">
             <span class="result-label">相关链接：</span>
@@ -76,7 +93,10 @@ import { reactive, ref } from "vue";
 // 创建axios实例
 const api = axios.create({
   baseURL: "http://localhost:6006",
-  timeout: 30000
+  timeout: 100000,
+  headers: {
+    "Content-Type": "multipart/form-data"
+  }
 });
 
 const userStore = useUserStore();
@@ -85,17 +105,35 @@ const form = reactive({
   text: ""
 });
 const uploadFile = ref(null);
+const imagePreview = ref(null);
 const resultText = ref("");
 const resultData = ref({
   is_fake: false,
   reason: "",
-  related_links: []
+  related_links: [],
+  detect_image_path: "",
+  fake_image_box: {
+    x1: 0,
+    x2: 0,
+    y1: 0,
+    y2: 0
+  },
+  fake_probability: 0,
+  fake_words: [],
+  manipulation_types: [],
+  original_shape: []
 });
 const isLoading = ref(false);
 const isDetected = ref(false);
 
 const handleFileChange = file => {
   uploadFile.value = file.raw;
+  // 创建图片预览
+  const reader = new FileReader();
+  reader.onload = e => {
+    imagePreview.value = e.target.result;
+  };
+  reader.readAsDataURL(file.raw);
 };
 
 const submitUpload = async () => {
@@ -104,27 +142,23 @@ const submitUpload = async () => {
     return;
   }
 
-  try {
-    const reader = new FileReader();
-    reader.onload = e => {
-      if (uploadFile.value.type === "text/plain") {
-        form.text = e.target.result;
-        ElMessage.success("文件上传成功");
-      } else {
-        form.text = `已成功上传文件: ${uploadFile.value.name}，文件大小: ${(uploadFile.value.size / 1024).toFixed(2)}KB`;
-        ElMessage.success("文件上传成功，文件内容已提取");
-      }
-    };
-    reader.readAsText(uploadFile.value);
-  } catch (error) {
-    ElMessage.error("文件上传失败，请重试");
-    console.error("上传文件错误:", error);
+  if (!uploadFile.value.type.startsWith("image/")) {
+    ElMessage.warning("请上传图片文件");
+    uploadFile.value = null;
+    return;
   }
+
+  ElMessage.success("图片上传成功");
 };
 
 const detectText = async () => {
-  if (!form.text && !uploadFile.value) {
-    ElMessage.warning("请先输入或上传文本");
+  if (!form.text) {
+    ElMessage.warning("请输入新闻文本内容");
+    return;
+  }
+
+  if (!uploadFile.value) {
+    ElMessage.warning("请上传图片");
     return;
   }
 
@@ -135,18 +169,37 @@ const detectText = async () => {
   try {
     const formData = new FormData();
     formData.append("user_id", userStore.userInfo.user_id);
-    if (form.text) {
-      formData.append("content", form.text);
-    } else if (uploadFile.value) {
-      formData.append("file", uploadFile.value);
-    }
-    const response = await api.post("/news_detection/text-detection", formData);
+    formData.append("content", form.text);
+    formData.append("image", uploadFile.value, uploadFile.value.name);
+
+    console.log("发送的数据：", {
+      user_id: userStore.userInfo.user_id,
+      content: form.text,
+      image: uploadFile.value.name
+    });
+
+    const response = await api.post("/news_detection/image-detection", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
 
     if (response.data.success) {
       resultData.value = {
         is_fake: response.data.data.is_fake,
-        reason: response.data.data.reason,
-        related_links: response.data.data.related_links
+        reason: response.data.data.detection_reason || "",
+        related_links: response.data.data.related_news_links || [],
+        detect_image_path: response.data.data.detect_image_path || "",
+        fake_image_box: response.data.data.fake_image_box || {
+          x1: 0,
+          x2: 0,
+          y1: 0,
+          y2: 0
+        },
+        fake_probability: response.data.data.fake_probability || 0,
+        fake_words: response.data.data.fake_words || [],
+        manipulation_types: response.data.data.manipulation_types || [],
+        original_shape: response.data.data.original_shape || []
       };
       resultText.value = "检测完成";
       isDetected.value = true;
@@ -157,7 +210,15 @@ const detectText = async () => {
     }
   } catch (error) {
     console.error("检测错误:", error);
-    ElMessage.error("检测失败，请重试");
+    if (error.response) {
+      console.error("错误响应:", error.response.data);
+      ElMessage.error(`检测失败: ${error.response.data.message || "服务器内部错误"}`);
+    } else if (error.request) {
+      console.error("请求错误:", error.request);
+      ElMessage.error("网络请求失败，请检查网络连接");
+    } else {
+      ElMessage.error("检测失败，请重试");
+    }
     isDetected.value = false;
   } finally {
     isLoading.value = false;
@@ -167,11 +228,23 @@ const detectText = async () => {
 const clearDetection = () => {
   form.text = "";
   uploadFile.value = null;
+  imagePreview.value = null;
   resultText.value = "";
   resultData.value = {
     is_fake: false,
     reason: "",
-    related_links: []
+    related_links: [],
+    detect_image_path: "",
+    fake_image_box: {
+      x1: 0,
+      x2: 0,
+      y1: 0,
+      y2: 0
+    },
+    fake_probability: 0,
+    fake_words: [],
+    manipulation_types: [],
+    original_shape: []
   };
   isDetected.value = false;
   ElMessage.success("已清空检测结果");
@@ -363,5 +436,12 @@ const clearDetection = () => {
 
 .link-item:hover {
   text-decoration: underline;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  margin-bottom: 10px;
 }
 </style>

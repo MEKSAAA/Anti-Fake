@@ -57,6 +57,8 @@
 </template>
 
 <script setup lang="ts">
+import { initDynamicRouter } from "@/routers/modules/dynamicRouter";
+import { useUserInfoStore } from "@/stores/modules/userInfo";
 import { CirclePlus, Lock, Message, User, UserFilled } from "@element-plus/icons-vue";
 import { ElForm, ElMessage } from "element-plus";
 import { onBeforeUnmount, reactive, ref } from "vue";
