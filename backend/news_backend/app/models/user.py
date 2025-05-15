@@ -14,20 +14,24 @@ class User(db.Model):
     username = db.Column(db.String(255))
     email = db.Column(db.String(255))
     password_hash = db.Column(db.String(255))
-    # profile_image = db.Column(db.String(255))
+    avatar = db.Column(db.String(255))
     
     # 关系: 添加反向引用给相关表
     detection_history = db.relationship('NewsDetectionHistory', backref='user', lazy=True)
     generation_history = db.relationship('NewsGenerationHistory', backref='user', lazy=True)
-    summary_history = db.relationship('NewsSummaryHistory', backref='user', lazy=True)
+    summary_history = db.relationship('NewsSummary', backref='user', lazy=True)
     user_statistics = db.relationship('NewsStatisticsByUser', backref='user', lazy=True)
     
-    def __init__(self, username, email=None, phone_number=None, wechat_openid=None,
-                password_hash=None, profile_image=None, login_method=None, role_id=None):
+    # 添加新的关系
+    title_generation_history = db.relationship('NewsTitleGeneration', backref='user', lazy=True)
+    text_optimization_history = db.relationship('NewsTextOptimization', backref='user', lazy=True)
+    
+    def __init__(self, username, email=None,
+                password_hash=None, avatar=None):
         self.username = username
         self.email = email
         self.password_hash = password_hash
-        self.profile_image = profile_image
+        self.avatar = avatar
 
 # 用于用户注册的 Schema，只包含必要字段
 class UserRegistrationSchema(ma.Schema):
@@ -40,7 +44,7 @@ class UserRegistrationSchema(ma.Schema):
 
 class UserResponseSchema(ma.Schema):
     class Meta:
-        fields = ('user_id', 'username', 'email')
+        fields = ('user_id', 'username', 'email', 'avatar')
 
 # 初始化 schemas
 user_registration_schema = UserRegistrationSchema()
