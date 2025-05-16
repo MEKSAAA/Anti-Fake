@@ -21,7 +21,7 @@
       <el-table-column label="附件" min-width="120" align="center">
         <template #default="{ row }">
           <el-button
-            v-if="row.detection_type === 'image' && row.detect_image_path"
+            v-if="row.detection_type === 'image' && row.image_path"
             type="primary"
             size="small"
             @click="showImage(row.image_path)"
@@ -96,7 +96,8 @@ const formatDate = (_: any, __: any, cellValue: string) => {
 const previewVisible = ref(false);
 const previewImageUrl = ref("");
 const showImage = (url: string) => {
-  previewImageUrl.value = `http://localhost:6006${url}`;
+  const adjustedUrl = url.replace(/^\/?root\/news_backend/, "http://localhost:6006");
+  previewImageUrl.value = adjustedUrl;
   previewVisible.value = true;
 };
 
