@@ -83,7 +83,7 @@
           </el-button>
         </template>
       </div>
-      <div class="generate-button" style="margin-top: 24px; display: flex; justify-content: flex-end;">
+      <div class="generate-button" style="margin-top: 24px; display: flex; justify-content: flex-end">
         <el-button type="primary" @click="generateContent" :loading="isGenerating" :disabled="!form.text || !selectedStyle">
           {{ activeFunction === "summary" ? "生成概要" : "生成标题" }}
         </el-button>
