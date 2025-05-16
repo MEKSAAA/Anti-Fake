@@ -1,15 +1,12 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request
 from app import db
 from app.models.news_detection import NewsDetectionHistory, news_detection_schema
-
-import os
 from werkzeug.utils import secure_filename
-import json
 import requests
 from dotenv import load_dotenv
-from .image_detection import translate_text,save_image
-from .text_detection import detect_text_content
-from .utils import api_response,extract_text_from_file,update_statistics
+from app.services.image_detection_service import translate_text, save_image, generate_detection_reason
+from app.services.text_detection_service import detect_text_content, search_related_news
+from app.utils.common import api_response, extract_text_from_file, update_statistics
 # 加载环境变量
 load_dotenv()
 
@@ -18,7 +15,21 @@ news_detection_bp = Blueprint('news_detection', __name__)
 
 @news_detection_bp.route('/text-detection', methods=['POST'])
 def detect_text_content_api():
-    """文本内容真假检测API"""
+    """
+    文本内容真假检测API
+    
+    参数(表单):
+        user_id (str): 用户ID
+        content (str): 文本内容，或上传的文本文件
+        
+    返回:
+        JSON: 包含检测结果的响应
+        
+    异常:
+        400: 参数缺失或文件处理错误
+        401: 未提供用户ID
+        500: 检测过程中发生错误
+    """
     try:
         # 检查是否有用户ID
         user_id = request.form.get('user_id')
@@ -109,18 +120,84 @@ def detect_text_content_api():
 
 @news_detection_bp.route('/history/<user_id>', methods=['GET'])
 def get_detection_history(user_id):
-    """获取用户的检测历史"""
+    """
+    获取用户的检测历史
+    
+    参数:
+        user_id (str): 用户ID (URL参数)
+        type (str, 可选): 过滤历史记录类型，可选值: image, text (查询参数)
+    
+    返回:
+        JSON: 包含用户检测历史的响应
+        
+    异常:
+        500: 获取历史记录失败
+    """
     try:
-        history = NewsDetectionHistory.query.filter_by(user_id=user_id).order_by(
-            NewsDetectionHistory.upload_date.desc()).all()
+        # 获取查询参数
+        detection_type = request.args.get('type')  # 可选参数，用于过滤历史记录类型
+        
+        # 构建查询
+        query = NewsDetectionHistory.query.filter_by(user_id=user_id)
+        
+        # 如果指定了类型，进行过滤
+        if detection_type:
+            if detection_type == 'image':
+                # 图像检测记录（图像路径不为空）
+                query = query.filter(NewsDetectionHistory.image_path.isnot(None))
+            elif detection_type == 'text':
+                # 文本检测记录（图像路径为空）
+                query = query.filter(NewsDetectionHistory.image_path.is_(None))
+        
+        # 按上传时间降序排序并获取结果
+        history = query.order_by(NewsDetectionHistory.upload_date.desc()).all()
+        
+        # 格式化结果
         from app.models.news_detection import news_detections_schema
-        return api_response(True, "获取历史记录成功", news_detections_schema.dump(history))
+        history_data = news_detections_schema.dump(history)
+        
+        # 对结果进行后处理，添加额外信息
+        for item in history_data:
+            # 确定记录类型
+            if item.get('image_path'):
+                item['detection_type'] = 'image'
+                # 如果有检测后的图像路径，添加到结果中
+                if item.get('detect_image_path'):
+                    item['has_detection_result'] = True
+                else:
+                    item['has_detection_result'] = False
+            else:
+                item['detection_type'] = 'text'
+            
+            # 处理相关链接，从字符串转为数组
+            if item.get('related_news_links'):
+                item['related_news_links'] = [link.strip() for link in item['related_news_links'].split(',') if link.strip()]
+            else:
+                item['related_news_links'] = []
+        
+        return api_response(True, "获取历史记录成功", history_data)
     except Exception as e:
         return api_response(False, f"获取历史记录失败: {str(e)}", status_code=500) 
     
     
 @news_detection_bp.route('/image-detection', methods=['POST'])
 def detect_image():
+    """
+    图像与文本联合检测API
+    
+    参数(表单):
+        user_id (str): 用户ID
+        content (str): 文本内容，或上传的文本文件
+        image (file): 图像文件
+        
+    返回:
+        JSON: 包含检测结果的响应
+        
+    异常:
+        400: 参数缺失或文件处理错误
+        401: 未提供用户ID
+        500: 检测过程中发生错误
+    """
     try:
         user_id = request.form.get('user_id')
         if not user_id:
@@ -141,8 +218,15 @@ def detect_image():
         if not content:
             return api_response(False, "请提供需要检测的文本内容", status_code=400)
         # 调用DeepSeek API进行翻译
-        # text=translate_text(content)
-        text=content
+        translated_text = translate_text(content)
+        if not translated_text:
+            # 如果翻译失败，使用原始内容
+            print("翻译失败，使用原始内容")
+            text = content
+        else:
+            print(f"翻译成功: {translated_text[:100]}...")
+            text = translated_text
+        
         # 获取图片文件
         image_path = None
         if 'image' in request.files:
@@ -152,7 +236,7 @@ def detect_image():
         else:
             return api_response(False, "请提供需要检测的图片文件", status_code=400)
                 
-         # 调用微服务API
+        # 调用微服务API
         try:
             json_data = {
                 'image_path': image_path,
@@ -162,6 +246,33 @@ def detect_image():
             
             if response.status_code == 200:
                 result = response.json()
+                
+                # 生成检测理由
+                detection_reason = None
+                related_news_links = []
+                
+                try:
+                    # 生成检测理由
+                    if result.get("is_fake"):
+                        manipulation_types = result.get("manipulation_types", [])
+                        fake_words = result.get("fake_words", [])
+                        detection_reason = generate_detection_reason(
+                            manipulation_types=manipulation_types,
+                            fake_words=fake_words,
+                            text=content,  # 使用原始中文内容生成理由
+                            fake_probability=result.get("fake_probability", 0)
+                        )
+                    
+                    # 搜索相关新闻链接
+                    related_news_links = search_related_news(content)  # 使用原始中文内容搜索新闻
+                    
+                    # 将新生成的字段添加到结果中
+                    result["detection_reason"] = detection_reason
+                    result["related_news_links"] = related_news_links
+                except Exception as ai_error:
+                    print(f"生成检测理由或相关新闻链接失败: {str(ai_error)}")
+                    # 失败时也不中断流程
+                
                 try:
                     detection = NewsDetectionHistory(
                         user_id=user_id,
@@ -169,6 +280,8 @@ def detect_image():
                         content=content,
                         image_path=image_path,
                         detect_image_path=result.get("detect_image_path"),
+                        detection_reason=detection_reason,
+                        related_news_links=", ".join(related_news_links) if related_news_links else ""
                     )
                     db.session.add(detection)
                     # 更新统计信息
