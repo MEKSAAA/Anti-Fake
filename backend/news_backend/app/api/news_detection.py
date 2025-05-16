@@ -1,14 +1,12 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request
 from app import db
 from app.models.news_detection import NewsDetectionHistory, news_detection_schema
-import os
 from werkzeug.utils import secure_filename
-import json
 import requests
 from dotenv import load_dotenv
-from .image_detection import translate_text, save_image, generate_detection_reason
-from .text_detection import detect_text_content
-from .utils import api_response, extract_text_from_file, update_statistics, search_related_news
+from app.services.image_detection_service import translate_text, save_image, generate_detection_reason
+from app.services.text_detection_service import detect_text_content, search_related_news
+from app.utils.common import api_response, extract_text_from_file, update_statistics
 # 加载环境变量
 load_dotenv()
 
@@ -17,7 +15,21 @@ news_detection_bp = Blueprint('news_detection', __name__)
 
 @news_detection_bp.route('/text-detection', methods=['POST'])
 def detect_text_content_api():
-    """文本内容真假检测API"""
+    """
+    文本内容真假检测API
+    
+    参数(表单):
+        user_id (str): 用户ID
+        content (str): 文本内容，或上传的文本文件
+        
+    返回:
+        JSON: 包含检测结果的响应
+        
+    异常:
+        400: 参数缺失或文件处理错误
+        401: 未提供用户ID
+        500: 检测过程中发生错误
+    """
     try:
         # 检查是否有用户ID
         user_id = request.form.get('user_id')
@@ -108,7 +120,19 @@ def detect_text_content_api():
 
 @news_detection_bp.route('/history/<user_id>', methods=['GET'])
 def get_detection_history(user_id):
-    """获取用户的检测历史"""
+    """
+    获取用户的检测历史
+    
+    参数:
+        user_id (str): 用户ID (URL参数)
+        type (str, 可选): 过滤历史记录类型，可选值: image, text (查询参数)
+    
+    返回:
+        JSON: 包含用户检测历史的响应
+        
+    异常:
+        500: 获取历史记录失败
+    """
     try:
         # 获取查询参数
         detection_type = request.args.get('type')  # 可选参数，用于过滤历史记录类型
@@ -153,11 +177,27 @@ def get_detection_history(user_id):
         
         return api_response(True, "获取历史记录成功", history_data)
     except Exception as e:
-        return api_response(False, f"获取历史记录失败: {str(e)}", status_code=500)
+        return api_response(False, f"获取历史记录失败: {str(e)}", status_code=500) 
     
     
 @news_detection_bp.route('/image-detection', methods=['POST'])
 def detect_image():
+    """
+    图像与文本联合检测API
+    
+    参数(表单):
+        user_id (str): 用户ID
+        content (str): 文本内容，或上传的文本文件
+        image (file): 图像文件
+        
+    返回:
+        JSON: 包含检测结果的响应
+        
+    异常:
+        400: 参数缺失或文件处理错误
+        401: 未提供用户ID
+        500: 检测过程中发生错误
+    """
     try:
         user_id = request.form.get('user_id')
         if not user_id:
@@ -196,7 +236,7 @@ def detect_image():
         else:
             return api_response(False, "请提供需要检测的图片文件", status_code=400)
                 
-         # 调用微服务API
+        # 调用微服务API
         try:
             json_data = {
                 'image_path': image_path,

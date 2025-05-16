@@ -8,14 +8,29 @@ detector = DeepFakeDetector('./configs/test.yaml', './HAMMER_checkpoint_best.pth
 
 @app.route('/detect', methods=['POST'])
 def detect():
+    """处理deepfake检测请求
+    
+    接收包含图片路径和文本的JSON请求，调用DeepFakeDetector进行检测
+    
+    参数:
+        从请求JSON获取:
+        image_path (str): 要检测的图片路径
+        text (str): 与图片相关的文本
+    
+    返回:
+        dict: 检测结果的JSON响应，包含是否为假图、概率等信息
+    
+    异常:
+        Exception: 当检测过程出错时抛出
+    """
     data = request.json
-    image_path=data['image_path']
-    text=data['text']
-    if not image_path :
+    image_path = data['image_path']
+    text = data['text']
+    if not image_path:
         return jsonify({"error": "没有上传图片"}), 400
     
-    if not text :
-        return jsonify({"error": "没有上传图片"}), 400
+    if not text:
+        return jsonify({"error": "没有上传文本"}), 400
         
     try:
         result = detector.predict(image_path, text)

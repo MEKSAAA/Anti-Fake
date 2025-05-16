@@ -1,7 +1,7 @@
-from flask import request, current_app
+from flask import current_app
 from openai import OpenAI
 import os
-from .utils import DEEPSEEK_API_KEY
+from app.utils.common import DEEPSEEK_API_KEY
 from werkzeug.utils import secure_filename
 
 

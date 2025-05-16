@@ -5,7 +5,7 @@ from app.models.news_summary import (
     get_available_summary_types, SummaryType
 )
 from datetime import datetime
-from .utils import api_response
+from app.utils.common import api_response
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
@@ -30,7 +30,14 @@ news_summary_bp = Blueprint('news_summary', __name__)
 
 @news_summary_bp.route('/types', methods=['GET'])
 def get_types():
-    """获取所有可用的概括类型"""
+    """获取所有可用的概括类型
+    
+    返回:
+        dict: 包含状态、消息和概括类型列表的API响应
+    
+    异常:
+        Exception: 当获取类型列表失败时抛出
+    """
     try:
         types = get_available_summary_types()
         return api_response(True, "获取概括类型列表成功", types)
@@ -39,7 +46,22 @@ def get_types():
 
 @news_summary_bp.route('/summarize', methods=['POST'])
 def summarize_content():
-    """生成新闻内容概括"""
+    """生成新闻内容概括
+    
+    从请求中获取新闻内容和概括类型，调用DeepSeek API生成概括，并保存到数据库
+    
+    参数:
+        从表单获取:
+        user_id (str): 用户ID
+        content (str): 需要概括的新闻内容
+        summary_type (str, 可选): 概括类型，默认为简短摘要
+    
+    返回:
+        dict: 包含状态、消息和概括结果的API响应
+    
+    异常:
+        Exception: 当生成概括失败或处理请求出错时抛出
+    """
     try:
         # 检查是否有用户ID
         user_id = request.form.get('user_id')
@@ -123,7 +145,19 @@ def summarize_content():
 
 @news_summary_bp.route('/history/<user_id>', methods=['GET'])
 def get_summary_history(user_id):
-    """获取用户的内容概括历史"""
+    """获取用户的内容概括历史
+    
+    查询指定用户的所有内容概括历史记录，按时间降序排列
+    
+    参数:
+        user_id (str): 用户ID，从URL路径获取
+    
+    返回:
+        dict: 包含状态、消息和历史记录列表的API响应
+    
+    异常:
+        Exception: 当获取历史记录失败时抛出
+    """
     try:
         # 查询历史记录
         history = NewsSummary.query.filter_by(user_id=user_id).order_by(

@@ -1,26 +1,11 @@
-from flask import Blueprint, request, jsonify, current_app
-from app import db
-from app.models.news_detection import NewsDetectionHistory, news_detection_schema
-from app.models.news_statistics import NewsStatistics, NewsStatisticsByUser
 from openai import OpenAI
 import os
-from werkzeug.utils import secure_filename
-import tempfile
-import docx2txt
-import PyPDF2
-import datetime
-import json
 import jieba
 import jieba.analyse
-from langchain.utilities import GoogleSerperAPIWrapper
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
 import requests
 from bs4 import BeautifulSoup
 import random
-from .image_detection import translate_text
-from .utils import api_response,extract_text_from_file
 # 加载环境变量
 load_dotenv()
 # 获取API密钥

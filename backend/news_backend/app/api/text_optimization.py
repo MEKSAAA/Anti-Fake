@@ -5,7 +5,7 @@ from app.models.news_text_optimization import (
     get_available_text_styles, TextStyle
 )
 from datetime import datetime
-from .utils import api_response
+from app.utils.common import api_response
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
@@ -30,7 +30,14 @@ text_optimization_bp = Blueprint('text_optimization', __name__)
 
 @text_optimization_bp.route('/styles', methods=['GET'])
 def get_styles():
-    """获取所有可用的文本风格"""
+    """获取所有可用的文本风格
+    
+    返回:
+        dict: 包含状态、消息和文本风格列表的API响应
+    
+    异常:
+        Exception: 当获取风格列表失败时抛出
+    """
     try:
         styles = get_available_text_styles()
         return api_response(True, "获取文本风格列表成功", styles)
@@ -39,7 +46,22 @@ def get_styles():
 
 @text_optimization_bp.route('/optimize', methods=['POST'])
 def optimize_text():
-    """优化新闻文本"""
+    """优化新闻文本
+    
+    从请求中获取原始文本和目标风格，调用DeepSeek API进行文本优化，并保存到数据库
+    
+    参数:
+        从表单获取:
+        user_id (str): 用户ID
+        text (str): 需要优化的原始文本
+        style (str, 可选): 目标文本风格，默认为新闻报道风格
+    
+    返回:
+        dict: 包含状态、消息和优化结果的API响应
+    
+    异常:
+        Exception: 当文本优化失败或处理请求出错时抛出
+    """
     try:
         # 检查是否有用户ID
         user_id = request.form.get('user_id')
@@ -122,7 +144,19 @@ def optimize_text():
 
 @text_optimization_bp.route('/history/<user_id>', methods=['GET'])
 def get_optimization_history(user_id):
-    """获取用户的文本优化历史"""
+    """获取用户的文本优化历史
+    
+    查询指定用户的所有文本优化历史记录，按时间降序排列
+    
+    参数:
+        user_id (str): 用户ID，从URL路径获取
+    
+    返回:
+        dict: 包含状态、消息和历史记录列表的API响应
+    
+    异常:
+        Exception: 当获取历史记录失败时抛出
+    """
     try:
         # 查询历史记录
         history = NewsTextOptimization.query.filter_by(user_id=user_id).order_by(

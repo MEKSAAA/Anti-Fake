@@ -5,7 +5,7 @@ from app.models.news_title_generation import (
     get_available_title_styles, TitleStyle
 )
 from datetime import datetime
-from .utils import api_response
+from app.utils.common import api_response
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
@@ -30,7 +30,14 @@ news_title_bp = Blueprint('news_title', __name__)
 
 @news_title_bp.route('/styles', methods=['GET'])
 def get_styles():
-    """获取所有可用的标题风格"""
+    """获取所有可用的标题风格
+    
+    返回:
+        dict: 包含状态、消息和标题风格列表的API响应
+    
+    异常:
+        Exception: 当获取风格列表失败时抛出
+    """
     try:
         styles = get_available_title_styles()
         return api_response(True, "获取标题风格列表成功", styles)
@@ -39,7 +46,22 @@ def get_styles():
 
 @news_title_bp.route('/generate', methods=['POST'])
 def generate_title():
-    """生成新闻标题"""
+    """生成新闻标题
+    
+    从请求中获取新闻内容和标题风格，调用DeepSeek API生成标题，并保存到数据库
+    
+    参数:
+        从表单获取:
+        user_id (str): 用户ID
+        content (str): 需要生成标题的新闻内容
+        style (str, 可选): 标题风格，默认为信息型风格
+    
+    返回:
+        dict: 包含状态、消息和生成标题的API响应
+    
+    异常:
+        Exception: 当生成标题失败或处理请求出错时抛出
+    """
     try:
         # 检查是否有用户ID
         user_id = request.form.get('user_id')
@@ -111,7 +133,19 @@ def generate_title():
 
 @news_title_bp.route('/history/<user_id>', methods=['GET'])
 def get_title_history(user_id):
-    """获取用户的标题生成历史"""
+    """获取用户的标题生成历史
+    
+    查询指定用户的所有标题生成历史记录，按时间降序排列
+    
+    参数:
+        user_id (str): 用户ID，从URL路径获取
+    
+    返回:
+        dict: 包含状态、消息和历史记录列表的API响应
+    
+    异常:
+        Exception: 当获取历史记录失败时抛出
+    """
     try:
         # 查询历史记录
         history = NewsTitleGeneration.query.filter_by(user_id=user_id).order_by(
