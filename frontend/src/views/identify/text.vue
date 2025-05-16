@@ -75,7 +75,7 @@
 </template>
 
 <script setup>
-import { useUserStore } from "@/stores/modules/user";
+import { useUserInfoStore } from "@/stores/modules/userInfo";
 import axios from "axios";
 import { ElMessage } from "element-plus";
 import { reactive, ref } from "vue";
@@ -86,7 +86,7 @@ const api = axios.create({
   timeout: 30000
 });
 
-const userStore = useUserStore();
+const userInfoStore = useUserInfoStore();
 
 const activeMethod = ref("input");
 const form = reactive({
@@ -145,12 +145,18 @@ const detectText = async () => {
 
   try {
     const formData = new FormData();
-    formData.append("user_id", userStore.userInfo.user_id);
+    formData.append("user_id", userInfoStore.user_id);
     if (activeMethod.value === "input" && form.text) {
       formData.append("content", form.text);
     } else if (activeMethod.value === "upload" && uploadFile.value) {
       formData.append("file", uploadFile.value);
     }
+    // 输出传入后端的内容
+    console.log("detectText 传入后端:", {
+      user_id: userInfoStore.user_id,
+      content: form.text,
+      file: uploadFile.value
+    });
     const response = await api.post("/news_detection/text-detection", formData);
 
     if (response.data.success) {
