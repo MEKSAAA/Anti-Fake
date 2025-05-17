@@ -1,5 +1,5 @@
 from app import db, ma
-from datetime import datetime
+from app.utils.time_util import china_time_now
 from enum import Enum
 
 # 定义概括类型枚举
@@ -28,7 +28,7 @@ class NewsSummary(db.Model):
     original_content = db.Column(db.Text)  # 原始新闻内容
     summary_type = db.Column(db.String(50))  # 概括类型
     summary_content = db.Column(db.Text)  # 概括结果
-    summary_date = db.Column(db.DateTime, default=datetime.utcnow)
+    summary_date = db.Column(db.DateTime, default=china_time_now)
     
     def __init__(self, user_id, original_content, summary_type, summary_content=None):
         self.user_id = user_id

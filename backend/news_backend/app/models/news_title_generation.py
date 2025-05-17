@@ -1,5 +1,5 @@
 from app import db, ma
-from datetime import datetime
+from app.utils.time_util import china_time_now
 from enum import Enum
 
 # 定义标题风格枚举
@@ -32,7 +32,7 @@ class NewsTitleGeneration(db.Model):
     original_content = db.Column(db.Text)  # 原始新闻内容
     title_style = db.Column(db.String(50))  # 标题风格
     generated_title = db.Column(db.String(255))  # 生成的标题
-    generation_date = db.Column(db.DateTime, default=datetime.utcnow)
+    generation_date = db.Column(db.DateTime, default=china_time_now)
     
     def __init__(self, user_id, original_content, title_style, generated_title=None):
         self.user_id = user_id

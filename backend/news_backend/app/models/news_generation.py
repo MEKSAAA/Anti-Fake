@@ -1,5 +1,5 @@
 from app import db, ma
-from datetime import datetime
+from app.utils.common import china_time_now
 
 class NewsGenerationHistory(db.Model):
     __tablename__ = 'news_generation_history'
@@ -9,7 +9,7 @@ class NewsGenerationHistory(db.Model):
     content = db.Column(db.Text)
     generated_title = db.Column(db.String(255))
     generated_content = db.Column(db.Text)
-    generation_date = db.Column(db.DateTime, default=datetime.utcnow)
+    generation_date = db.Column(db.DateTime, default=china_time_now)
     generated_by = db.Column(db.String(255))
     
     def __init__(self, user_id, content, generated_title=None, 

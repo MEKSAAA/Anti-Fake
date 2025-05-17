@@ -1,5 +1,5 @@
 from app import db, ma
-from datetime import datetime
+from app.utils.time_util import china_time_now
 
 class NewsStatistics(db.Model):
     __tablename__ = 'news_statistics'
@@ -8,7 +8,7 @@ class NewsStatistics(db.Model):
     total_fake_count = db.Column(db.Integer, default=0)
     total_real_count = db.Column(db.Integer, default=0)
     total_users = db.Column(db.Integer, default=0)
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow, primary_key=True)
+    last_updated = db.Column(db.DateTime, default=china_time_now, primary_key=True)
     
     def __init__(self, total_news_count=0, total_fake_count=0, 
                  total_real_count=0, total_users=0):
@@ -24,7 +24,7 @@ class NewsStatisticsByUser(db.Model):
     total_news_count = db.Column(db.Integer, default=0)
     total_fake_count = db.Column(db.Integer, default=0)
     total_real_count = db.Column(db.Integer, default=0)
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    last_updated = db.Column(db.DateTime, default=china_time_now)
     
     def __init__(self, user_id, total_news_count=0, total_fake_count=0, total_real_count=0):
         self.user_id = user_id

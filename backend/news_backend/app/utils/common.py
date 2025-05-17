@@ -1,19 +1,14 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import jsonify
 from app import db
-from app.models.news_detection import NewsDetectionHistory, news_detection_schema
 from app.models.news_statistics import NewsStatistics, NewsStatisticsByUser
-from openai import OpenAI
 import os
 from werkzeug.utils import secure_filename
 import tempfile
 import docx2txt
 import PyPDF2
 import datetime
-import json
-import requests
-from bs4 import BeautifulSoup
-import random
 from dotenv import load_dotenv
+from app.utils.time_util import china_time_now
 
 # 加载环境变量
 load_dotenv()
@@ -36,7 +31,7 @@ def update_statistics(user_id, is_fake):
         global_stats.total_fake_count += 1
     else:
         global_stats.total_real_count += 1
-    global_stats.last_updated = datetime.datetime.utcnow()
+    global_stats.last_updated = china_time_now()
     
     # 更新用户统计
     user_stats = NewsStatisticsByUser.query.filter_by(user_id=user_id).first()
@@ -49,7 +44,7 @@ def update_statistics(user_id, is_fake):
         user_stats.total_fake_count += 1
     else:
         user_stats.total_real_count += 1
-    user_stats.last_updated = datetime.datetime.utcnow()
+    user_stats.last_updated = china_time_now()
     
     # 不在这里提交事务，让调用者负责提交
     # db.session.commit()

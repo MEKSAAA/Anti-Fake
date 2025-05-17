@@ -5,7 +5,8 @@ from app.models.news_statistics import (
     news_stats_schema, news_stats_by_user_schema, news_stats_by_users_schema
 )
 from app.models.news_detection import NewsDetectionHistory
-from sqlalchemy import func, desc, case
+from app.utils.time_util import china_time_now  
+from sqlalchemy import func, desc, case     
 from datetime import datetime, timedelta
 from app.utils.common import api_response
 
@@ -85,8 +86,8 @@ def get_detection_trend():
         # 获取查询参数
         days = request.args.get('days', 7, type=int)  # 默认过去7天
         
-        # 计算起始日期
-        start_date = datetime.utcnow() - timedelta(days=days)
+        # 计算起始日期（使用中国时区）
+        start_date = china_time_now() - timedelta(days=days)
         
         # 按日期分组统计检测数量
         daily_counts = db.session.query(

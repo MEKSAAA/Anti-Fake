@@ -10,7 +10,7 @@ from flask_cors import CORS
 load_dotenv()
 
 # 初始化Flask应用
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../static')
 CORS(app)
 # print("MAIL_PASSWORD from env:", os.environ.get("MAIL_PASSWORD"))
 
@@ -42,5 +42,24 @@ app.register_blueprint(auth, url_prefix='/auth')
 from app.api.news_detection import news_detection_bp
 app.register_blueprint(news_detection_bp, url_prefix='/news_detection')
 
+from app.api.image_generation import image_generation_bp
+app.register_blueprint(image_generation_bp,url_prefix='/image_generation')
+
+from app.api.news_statistics import news_statistics_bp
+app.register_blueprint(news_statistics_bp, url_prefix='/statistics')
+
+# 导入新添加的蓝图
+from app.api.news_title import news_title_bp
+app.register_blueprint(news_title_bp, url_prefix='/news_title')
+
+from app.api.news_summary import news_summary_bp
+app.register_blueprint(news_summary_bp, url_prefix='/news_summary')
+
+from app.api.text_optimization import text_optimization_bp
+app.register_blueprint(text_optimization_bp, url_prefix='/text_optimization')
+
+# 创建数据库表
+with app.app_context():
+    db.create_all()
 
 

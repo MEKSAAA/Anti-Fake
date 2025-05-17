@@ -1,5 +1,4 @@
 from app import db, ma
-from datetime import datetime
 from marshmallow import validate
 from marshmallow import ValidationError
 

@@ -1,5 +1,5 @@
 from app import db, ma
-from datetime import datetime
+from app.utils.time_util import china_time_now
 
 class NewsDetectionHistory(db.Model):
     __tablename__ = 'news_detection_history'
@@ -10,7 +10,7 @@ class NewsDetectionHistory(db.Model):
     content = db.Column(db.Text)
     detection_reason = db.Column(db.Text)
     related_news_links = db.Column(db.Text)
-    upload_date = db.Column(db.DateTime, default=datetime.utcnow)
+    upload_date = db.Column(db.DateTime, default=china_time_now)
     image_path = db.Column(db.String(255))
     detect_image_path= db.Column(db.String(255))
     
