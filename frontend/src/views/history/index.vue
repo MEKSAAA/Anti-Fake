@@ -32,7 +32,15 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="detection_reason" label="检测结果" min-width="300" align="center" :show-overflow-tooltip="true" />
+      <el-table-column
+        prop="detection_reason"
+        label="检测结果"
+        min-width="300"
+        align="center"
+        :show-overflow-tooltip="true"
+        :formatter="formatDetectionReason"
+      />
+
       <el-table-column prop="upload_date" label="检测时间" min-width="120" align="center" :formatter="formatDate" />
     </el-table>
 
@@ -85,6 +93,11 @@ const paginatedData = computed(() => {
 });
 const handlePageChange = (page: number) => {
   currentPage.value = page;
+};
+
+// 结果格式化
+const formatDetectionReason = (_: any, __: any, cellValue: string) => {
+  return cellValue ?? "真实";
 };
 
 // 时间格式化
