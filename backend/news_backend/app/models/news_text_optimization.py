@@ -1,5 +1,5 @@
 from app import db, ma
-from datetime import datetime
+from app.utils.time_util import china_time_now
 from enum import Enum
 
 # 定义文本优化风格枚举
@@ -36,7 +36,7 @@ class NewsTextOptimization(db.Model):
     original_text = db.Column(db.Text)  # 原始文本
     target_style = db.Column(db.String(50))  # 目标风格
     optimized_text = db.Column(db.Text)  # 优化后的文本
-    optimization_date = db.Column(db.DateTime, default=datetime.utcnow)
+    optimization_date = db.Column(db.DateTime, default=china_time_now)
     
     def __init__(self, user_id, original_text, target_style, optimized_text=None):
         self.user_id = user_id

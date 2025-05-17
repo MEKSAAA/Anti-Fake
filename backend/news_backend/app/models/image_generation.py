@@ -1,7 +1,6 @@
 from app import db, ma
-from datetime import datetime
 from enum import Enum
-
+from app.utils.time_util import china_time_now
 # 定义图像风格枚举
 class ImageStyle(Enum):
     REALISTIC = "realistic"            # 写实风格
@@ -38,7 +37,7 @@ class ImageGeneration(db.Model):
     image_size = db.Column(db.String(50))  # 图片尺寸
     image_num = db.Column(db.Integer)  # 生成图片数量
     image_paths = db.Column(db.Text)  # 生成的图片路径集合，以JSON字符串形式存储
-    generation_date = db.Column(db.DateTime, default=datetime.utcnow)
+    generation_date = db.Column(db.DateTime, default=china_time_now)
     task_id = db.Column(db.String(255))  # API任务ID
     
     def __init__(self, user_id, prompt_text, image_style, image_size, image_num=1, image_paths=None, task_id=None):
