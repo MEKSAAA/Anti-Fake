@@ -1,6 +1,6 @@
 <template>
   <div class="text-identify-container">
-    <div class="page-title">多模态检测</div>
+    <div class="page-title">图片检测</div>
     <div class="page-subtitle">上传新闻文本和图片以供检测</div>
 
     <div class="input-container">
