@@ -3,17 +3,9 @@
     <img src="@/assets/images/logo_with_name.png" alt="Logo" class="logo-image" />
   </div>
 
-  <el-form ref="registerFormRef" :model="registerForm" :rules="registerRules" size="large">
-    <el-form-item prop="username">
-      <el-input v-model="registerForm.username" placeholder="请输入用户名">
-        <template #prefix>
-          <el-icon><User /></el-icon>
-        </template>
-      </el-input>
-    </el-form-item>
-
+  <el-form ref="forgotFormRef" :model="forgotForm" :rules="forgotRules" size="large">
     <el-form-item prop="email">
-      <el-input v-model="registerForm.email" placeholder="请输入邮箱">
+      <el-input v-model="forgotForm.email" placeholder="请输入邮箱">
         <template #prefix>
           <el-icon><Message /></el-icon>
         </template>
@@ -21,7 +13,7 @@
     </el-form-item>
 
     <el-form-item prop="code">
-      <el-input v-model="registerForm.code" placeholder="请输入验证码">
+      <el-input v-model="forgotForm.code" placeholder="请输入验证码">
         <template #prefix>
           <el-icon><ChatDotRound /></el-icon>
         </template>
@@ -34,7 +26,7 @@
     </el-form-item>
 
     <el-form-item prop="password">
-      <el-input v-model="registerForm.password" type="password" placeholder="请输入密码" show-password>
+      <el-input v-model="forgotForm.password" type="password" placeholder="请输入密码" show-password>
         <template #prefix>
           <el-icon><Lock /></el-icon>
         </template>
@@ -42,7 +34,7 @@
     </el-form-item>
 
     <el-form-item prop="confirmPassword">
-      <el-input v-model="registerForm.confirmPassword" type="password" placeholder="请确认密码" show-password>
+      <el-input v-model="forgotForm.confirmPassword" type="password" placeholder="请确认密码" show-password>
         <template #prefix>
           <el-icon><Lock /></el-icon>
         </template>
@@ -52,16 +44,8 @@
 
   <div class="buttons">
     <el-button :icon="Back" @click="goToLogin" round size="large" style="width: 180px">返回登录</el-button>
-    <el-button
-      :icon="Check"
-      type="primary"
-      :loading="loading"
-      @click="register(registerForm)"
-      round
-      size="large"
-      style="width: 180px"
-    >
-      注册
+    <el-button :icon="Check" type="primary" :loading="loading" @click="forgot()" round size="large" style="width: 180px">
+      找回
     </el-button>
   </div>
 </template>
@@ -70,17 +54,16 @@
 import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
 import type { ElForm } from "element-plus";
-import { User, Lock, Message, Check, Back } from "@element-plus/icons-vue";
+import { Lock, Message, Check, Back } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 
 type FormInstance = InstanceType<typeof ElForm>;
 
 const router = useRouter();
 const loading = ref(false);
-const registerFormRef = ref<FormInstance>();
+const forgotFormRef = ref<FormInstance>();
 
-const registerForm = reactive({
-  username: "",
+const forgotForm = reactive({
   email: "",
   password: "",
   confirmPassword: "",
@@ -92,15 +75,14 @@ const validateConfirmPassword = (rule: any, value: string, callback: any) => {
     callback(new Error("请确认密码")); // 为空
   } else if (value.length < 6) {
     callback(new Error("密码长度至少6位"));
-  } else if (value !== registerForm.password) {
+  } else if (value !== forgotForm.password) {
     callback(new Error("两次输入的密码不一致！")); // 和密码不一样
   } else {
     callback(); // 成功
   }
 };
 
-const registerRules = reactive({
-  username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+const forgotRules = reactive({
   email: [{ required: true, message: "请输入邮箱", trigger: "blur" }],
   password: [{ required: true, message: "请输入密码", trigger: "blur" }],
   confirmPassword: [{ validator: validateConfirmPassword, trigger: "blur" }],
@@ -111,7 +93,7 @@ const countdown = ref(0);
 let timer: ReturnType<typeof setInterval>;
 
 const sendCode = async () => {
-  if (!registerForm.email) {
+  if (!forgotForm.email) {
     ElMessage.warning("请先输入邮箱📮");
     return;
   }
@@ -124,7 +106,7 @@ const sendCode = async () => {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ email: registerForm.email })
+      body: JSON.stringify({ email: forgotForm.email })
     });
 
     const result = await response.json();
@@ -147,45 +129,44 @@ const sendCode = async () => {
   }
 };
 
-const register = async (form: { username: string; email: string; password: string; confirmPassword: string; code: string }) => {
-  if (!registerFormRef.value) return;
+const forgot = async () => {
+  if (!forgotFormRef.value) return;
 
+  // 校验表单
   try {
-    await registerFormRef.value.validate(); // 如果validate失败，会抛异常，直接跳catch，不会往下执行
-  } catch (validateError) {
-    console.warn("表单校验未通过❌", validateError);
-    ElMessage.warning("请完善表单信息🌟");
-    return; // 校验失败后，直接return，不要继续请求接口
+    await forgotFormRef.value.validate();
+  } catch (validationError) {
+    ElMessage.warning("请完整填写表单信息🌟");
+    return;
   }
 
   loading.value = true;
 
   try {
-    const response = await fetch("http://localhost:6006/auth/register", {
+    const res = await fetch("http://localhost:6006/auth/find_password_email", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        username: form.username,
-        email: form.email,
-        password: form.password,
-        verification_code: form.code
+        email: forgotForm.email,
+        verification_code: forgotForm.code,
+        new_password: forgotForm.password
       })
     });
 
-    const data = await response.json();
+    const data = await res.json();
 
-    if (response.ok) {
-      ElMessage.success(data.message);
-      console.log("注册成功", data.user);
+    if (res.ok && data.success) {
+      ElMessage.success(data.message || "密码找回成功！");
+      console.log("找回密码成功🎉", data);
       router.push("/login");
     } else {
-      ElMessage.error(data.message || "注册失败，请重试！");
+      ElMessage.error(data.message || "找回失败，请稍后重试！");
     }
   } catch (error) {
-    console.error("注册异常:", error);
-    ElMessage.error("网络错误，无法连接到服务器！");
+    console.error("找回密码请求异常❌", error);
+    ElMessage.error("网络连接失败，请检查你的网络或稍后再试！");
   } finally {
     loading.value = false;
   }

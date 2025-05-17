@@ -26,6 +26,14 @@ export const staticRouter: RouteRecordRaw[] = [
     }
   },
   {
+    path: "/forgot",
+    name: "forgot",
+    component: () => import("@/views/forgot/index.vue"),
+    meta: {
+      title: "找回密码"
+    }
+  },
+  {
     path: "/layout",
     name: "layout",
     component: () => import("@/layouts/index.vue"),

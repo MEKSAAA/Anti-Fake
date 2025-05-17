@@ -50,6 +50,10 @@
     </el-tabs>
   </el-form>
 
+  <div class="forgot-password">
+    <el-link type="primary" @click="goToForgot">忘记密码？去找回</el-link>
+  </div>
+
   <div class="login-btn">
     <el-button :icon="CirclePlus" round size="large" @click="goToRegister">注册</el-button>
     <el-button :icon="UserFilled" round size="large" type="primary" :loading="loading" @click="handleLogin"> 登录 </el-button>
@@ -121,6 +125,10 @@ const sendCode = async () => {
   }
 };
 
+const goToForgot = () => {
+  router.push("/forgot");
+};
+
 const handleLogin = async () => {
   const method = loginMethod.value;
   const form = loginForm;
@@ -189,6 +197,11 @@ onBeforeUnmount(() => {
 
 ::v-deep(.el-tabs__item) {
   flex: 1;
+  text-align: center;
+}
+
+.forgot-password {
+  margin-top: -25px;
   text-align: center;
 }
 </style>
