@@ -1,6 +1,6 @@
 <template>
   <div class="history-wrapper">
-    <h2>历史记录</h2>
+    <h2>检测历史</h2>
     <div class="method-tabs">
       <div class="method method-one" :class="{ active: activeMethod === 'all' }" @click="setActiveMethod('all')">
         <div class="method-label">全部历史</div>

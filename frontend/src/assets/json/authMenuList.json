@@ -30,112 +30,12 @@
       }
     },
     {
-      "path": "/echarts",
-      "name": "echarts",
-      "redirect": "/echarts/waterChart",
-      "meta": {
-        "icon": "Picture",
-        "title": "图片检测",
-        "isLink": "",
-        "isHide": false,
-        "isFull": false,
-        "isAffix": false,
-        "isKeepAlive": true
-      },
-      "children": [
-        {
-          "path": "/echarts/waterChart",
-          "name": "waterChart",
-          "component": "/echarts/waterChart/index",
-          "meta": {
-            "icon": "Menu",
-            "title": "水型图",
-            "isLink": "",
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        },
-        {
-          "path": "/echarts/columnChart",
-          "name": "columnChart",
-          "component": "/echarts/columnChart/index",
-          "meta": {
-            "icon": "Menu",
-            "title": "柱状图",
-            "isLink": "",
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        },
-        {
-          "path": "/echarts/lineChart",
-          "name": "lineChart",
-          "component": "/echarts/lineChart/index",
-          "meta": {
-            "icon": "Menu",
-            "title": "折线图",
-            "isLink": "",
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        },
-        {
-          "path": "/echarts/pieChart",
-          "name": "pieChart",
-          "component": "/echarts/pieChart/index",
-          "meta": {
-            "icon": "Menu",
-            "title": "饼图",
-            "isLink": "",
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        },
-        {
-          "path": "/echarts/radarChart",
-          "name": "radarChart",
-          "component": "/echarts/radarChart/index",
-          "meta": {
-            "icon": "Menu",
-            "title": "雷达图",
-            "isLink": "",
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        },
-        {
-          "path": "/echarts/nestedChart",
-          "name": "nestedChart",
-          "component": "/echarts/nestedChart/index",
-          "meta": {
-            "icon": "Menu",
-            "title": "嵌套环形图",
-            "isLink": "",
-            "isHide": false,
-            "isFull": false,
-            "isAffix": false,
-            "isKeepAlive": true
-          }
-        }
-      ]
-    },
-    {
       "path": "/identify/multimodal",
       "name": "multimodal",
       "component": "/identify/multimodal",
       "meta": {
-        "icon": "Connection",
-        "title": "多模态检测",
+        "icon": "Picture",
+        "title": "图片检测",
         "isLink": "",
         "isHide": false,
         "isFull": false,
@@ -163,7 +63,7 @@
           "component": "/menu/menu1/index",
           "meta": {
             "icon": "ChatLineSquare",
-            "title": "标题生成",
+            "title": "新闻处理",
             "isLink": "",
             "isHide": false,
             "isFull": false,
@@ -202,9 +102,9 @@
       ]
     },
     {
-      "path": "/history/index",
-      "name": "shistory",
-      "component": "/history/index",
+      "path": "/history/detectIndex",
+      "name": "history",
+      "redirect": "/history/detectIndex",
       "meta": {
         "icon": "Memo",
         "title": "历史记录",
@@ -213,7 +113,37 @@
         "isFull": false,
         "isAffix": false,
         "isKeepAlive": true
-      }
+      },
+      "children": [
+        {
+          "path": "/history/detectHistory",
+          "name": "history",
+          "component": "/history/detectHistory",
+          "meta": {
+            "icon": "Search",
+            "title": "检测历史",
+            "isLink": "",
+            "isHide": false,
+            "isFull": false,
+            "isAffix": false,
+            "isKeepAlive": true
+          }
+        },
+        {
+          "path": "/history/optimizeHistory",
+          "name": "shistory",
+          "component": "/history/optimizeHistory",
+          "meta": {
+            "icon": "TrendCharts",
+            "title": "优化历史",
+            "isLink": "",
+            "isHide": false,
+            "isFull": false,
+            "isAffix": false,
+            "isKeepAlive": true
+          }
+        }
+      ]
     }
   ],
   "msg": "成功"
