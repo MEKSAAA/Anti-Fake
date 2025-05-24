@@ -35,12 +35,13 @@
       </div>
     </div>
 
-    <div class="result-container">
+    <div class="result-container" style="position: relative">
       <div class="result-header">
         <img src="@/assets/icons/ai-report.svg" class="result-icon" />
         <span class="result-title">AI检测报告</span>
       </div>
       <div class="result-content">
+        <LoadingAnimation :visible="isLoading" :percentage="loadingPercentage" :container-mode="true" />
         <div v-if="!resultText" class="no-content">还未上传内容！</div>
         <div v-else class="result-text">
           <div class="result-item">
@@ -73,6 +74,12 @@
               </a>
             </div>
           </div>
+          <div v-if="resultData.detect_image_path" class="result-item">
+            <span class="result-label">检测图片：</span>
+            <div class="detect-image-container">
+              <img :src="resultData.detect_image_path" class="detect-image" />
+            </div>
+          </div>
         </div>
       </div>
       <div class="action-button">
@@ -85,6 +92,7 @@
 </template>
 
 <script setup>
+import LoadingAnimation from "@/components/LoadingAnimation.vue";
 import { useUserInfoStore } from "@/stores/modules/userInfo";
 import axios from "axios";
 import { ElMessage } from "element-plus";
@@ -98,6 +106,46 @@ const api = axios.create({
     "Content-Type": "multipart/form-data"
   }
 });
+
+// 添加请求拦截器
+api.interceptors.request.use(
+  config => {
+    return config;
+  },
+  error => {
+    console.error("请求错误:", error);
+    ElMessage.error("请求发送失败，请检查网络连接");
+    return Promise.reject(error);
+  }
+);
+
+// 添加响应拦截器
+api.interceptors.response.use(
+  response => {
+    return response;
+  },
+  error => {
+    if (error.code === "ECONNABORTED") {
+      ElMessage.error("请求超时，请重试");
+    } else if (error.response) {
+      switch (error.response.status) {
+        case 404:
+          ElMessage.error("请求的资源不存在");
+          break;
+        case 500:
+          ElMessage.error("服务器内部错误");
+          break;
+        default:
+          ElMessage.error(`请求失败: ${error.response.status}`);
+      }
+    } else if (error.request) {
+      ElMessage.error("无法连接到服务器，请检查网络连接");
+    } else {
+      ElMessage.error("请求发生错误，请重试");
+    }
+    return Promise.reject(error);
+  }
+);
 
 const userInfoStore = useUserInfoStore();
 
@@ -125,6 +173,8 @@ const resultData = ref({
 });
 const isLoading = ref(false);
 const isDetected = ref(false);
+const loadingPercentage = ref(0);
+let loadingInterval;
 
 const handleFileChange = file => {
   uploadFile.value = file.raw;
@@ -163,21 +213,22 @@ const detectText = async () => {
   }
 
   isLoading.value = true;
+  loadingPercentage.value = 0;
   resultText.value = "";
   isDetected.value = false;
+
+  // 启动进度条动画
+  loadingInterval = setInterval(() => {
+    if (loadingPercentage.value < 90) {
+      loadingPercentage.value += Math.random() * 10;
+    }
+  }, 500);
 
   try {
     const formData = new FormData();
     formData.append("user_id", userInfoStore.user_id);
     formData.append("content", form.text);
     formData.append("image", uploadFile.value, uploadFile.value.name);
-
-    // 输出传入后端的内容
-    console.log("detectText 传入后端:", {
-      user_id: userInfoStore.user_id,
-      content: form.text,
-      image: uploadFile.value
-    });
 
     const response = await api.post("/news_detection/image-detection", formData, {
       headers: {
@@ -186,6 +237,7 @@ const detectText = async () => {
     });
 
     if (response.data.success) {
+      loadingPercentage.value = 100;
       resultData.value = {
         is_fake: response.data.data.is_fake,
         reason: response.data.data.detection_reason || "",
@@ -222,6 +274,7 @@ const detectText = async () => {
     }
     isDetected.value = false;
   } finally {
+    clearInterval(loadingInterval);
     isLoading.value = false;
   }
 };
@@ -444,5 +497,20 @@ const clearDetection = () => {
   max-height: 200px;
   object-fit: contain;
   margin-bottom: 10px;
+}
+
+.detect-image-container {
+  margin-top: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.detect-image {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
 }
 </style>

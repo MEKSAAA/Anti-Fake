@@ -37,12 +37,13 @@
       </el-upload>
     </div>
 
-    <div class="result-container">
+    <div class="result-container" style="position: relative">
       <div class="result-header">
         <img src="@/assets/icons/ai-report.svg" class="result-icon" />
         <span class="result-title">AI检测报告</span>
       </div>
       <div class="result-content">
+        <LoadingAnimation :visible="isLoading" :percentage="loadingPercentage" :container-mode="true" />
         <div v-if="!resultText" class="no-content">还未上传内容！</div>
         <div v-else class="result-text">
           <div class="result-item">
@@ -75,6 +76,7 @@
 </template>
 
 <script setup>
+import LoadingAnimation from "@/components/LoadingAnimation.vue";
 import { useUserInfoStore } from "@/stores/modules/userInfo";
 import axios from "axios";
 import { ElMessage } from "element-plus";
@@ -101,6 +103,8 @@ const resultData = ref({
 });
 const isLoading = ref(false);
 const isDetected = ref(false);
+const loadingPercentage = ref(0);
+let loadingInterval;
 
 const setActiveMethod = method => {
   activeMethod.value = method;
@@ -140,8 +144,16 @@ const detectText = async () => {
   }
 
   isLoading.value = true;
+  loadingPercentage.value = 0;
   resultText.value = "";
   isDetected.value = false;
+
+  // 启动进度条动画
+  loadingInterval = setInterval(() => {
+    if (loadingPercentage.value < 90) {
+      loadingPercentage.value += Math.random() * 10;
+    }
+  }, 500);
 
   try {
     const formData = new FormData();
@@ -160,6 +172,7 @@ const detectText = async () => {
     const response = await api.post("/news_detection/text-detection", formData);
 
     if (response.data.success) {
+      loadingPercentage.value = 100;
       resultData.value = {
         is_fake: response.data.data.is_fake,
         reason: response.data.data.reason,
@@ -177,6 +190,7 @@ const detectText = async () => {
     ElMessage.error("检测失败，请重试");
     isDetected.value = false;
   } finally {
+    clearInterval(loadingInterval);
     isLoading.value = false;
   }
 };

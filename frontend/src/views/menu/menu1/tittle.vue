@@ -57,7 +57,8 @@
     </div>
 
     <!-- 风格选择区域 -->
-    <div class="style-selection">
+    <div class="style-selection" style="position: relative">
+      <LoadingAnimation :visible="isGenerating" :percentage="loadingPercentage" :container-mode="true" />
       <div class="style-title">选择生成风格：</div>
       <div class="style-buttons">
         <template v-if="activeFunction === 'summary'">
@@ -107,10 +108,16 @@
 </template>
 
 <script setup>
+import LoadingAnimation from "@/components/LoadingAnimation.vue";
 import { useUserInfoStore } from "@/stores/modules/userInfo";
 import axios from "axios";
 import { ElMessage } from "element-plus";
+import mammoth from "mammoth";
+import * as pdfjsLib from "pdfjs-dist";
 import { reactive, ref } from "vue";
+
+// 设置 PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 // 创建axios实例
 const api = axios.create({
@@ -128,6 +135,8 @@ const isGenerating = ref(false);
 const generatedContent = ref("");
 const uploadFile = ref(null);
 const isGenerated = ref(false);
+const loadingPercentage = ref(0);
+let loadingInterval;
 
 // 标题风格动态获取
 const titleStyles = ref([]);
@@ -207,6 +216,39 @@ const handleFileChange = file => {
   uploadFile.value = file.raw;
 };
 
+// 解析PDF文件
+const parsePDF = async file => {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = "";
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(item => item.str).join(" ");
+      fullText += pageText + "\n";
+    }
+
+    return fullText;
+  } catch (error) {
+    console.error("PDF解析错误:", error);
+    throw new Error("PDF文件解析失败");
+  }
+};
+
+// 解析Word文件
+const parseWord = async file => {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value;
+  } catch (error) {
+    console.error("Word解析错误:", error);
+    throw new Error("Word文件解析失败");
+  }
+};
+
 const submitUpload = async () => {
   if (!uploadFile.value) {
     ElMessage.warning("请先选择文件");
@@ -214,17 +256,39 @@ const submitUpload = async () => {
   }
 
   try {
-    const reader = new FileReader();
-    reader.onload = e => {
-      if (uploadFile.value.type === "text/plain") {
+    if (uploadFile.value.type === "text/plain") {
+      const reader = new FileReader();
+      reader.onload = e => {
+        if (!e.target?.result) return;
         form.text = e.target.result;
         ElMessage.success("文件上传成功");
-      } else {
-        form.text = `已成功上传文件: ${uploadFile.value.name}，文件大小: ${(uploadFile.value.size / 1024).toFixed(2)}KB`;
-        ElMessage.success("文件上传成功，文件内容已提取");
+      };
+      reader.readAsText(uploadFile.value);
+    } else if (uploadFile.value.type === "application/pdf") {
+      try {
+        const text = await parsePDF(uploadFile.value);
+        form.text = text;
+        ElMessage.success("PDF文件解析成功");
+      } catch (error) {
+        ElMessage.error("PDF文件解析失败，请重试");
+        clearAll();
       }
-    };
-    reader.readAsText(uploadFile.value);
+    } else if (
+      uploadFile.value.type === "application/msword" ||
+      uploadFile.value.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ) {
+      try {
+        const text = await parseWord(uploadFile.value);
+        form.text = text;
+        ElMessage.success("Word文件解析成功");
+      } catch (error) {
+        ElMessage.error("Word文件解析失败，请重试");
+        clearAll();
+      }
+    } else {
+      ElMessage.warning("请上传txt、PDF或Word格式的文件");
+      clearAll();
+    }
   } catch (error) {
     ElMessage.error("文件上传失败，请重试");
     console.error("上传文件错误:", error);
@@ -249,20 +313,15 @@ const generateContent = async () => {
     return;
   }
   isGenerating.value = true;
-  // 输出传入后端的内容
-  if (activeFunction.value === "title") {
-    console.log("generateContent 传入后端:", {
-      user_id: userInfoStore.user_id,
-      content: form.text,
-      style: selectedStyle.value
-    });
-  } else if (activeFunction.value === "summary") {
-    console.log("generateContent 传入后端:", {
-      user_id: userInfoStore.user_id,
-      content: form.text,
-      summary_type: selectedStyle.value
-    });
-  }
+  loadingPercentage.value = 0;
+
+  // 启动进度条动画
+  loadingInterval = setInterval(() => {
+    if (loadingPercentage.value < 90) {
+      loadingPercentage.value += Math.random() * 10;
+    }
+  }, 500);
+
   try {
     if (activeFunction.value === "title") {
       const formData = new FormData();
@@ -271,6 +330,7 @@ const generateContent = async () => {
       formData.append("style", selectedStyle.value);
       const response = await api.post("/news_title/generate", formData);
       if (response.data.success) {
+        loadingPercentage.value = 100;
         generatedContent.value = response.data.data.title;
         ElMessage.success("标题生成成功");
         isGenerated.value = true;
@@ -284,6 +344,7 @@ const generateContent = async () => {
       formData.append("summary_type", selectedStyle.value);
       const response = await api.post("/news_summary/summarize", formData);
       if (response.data.success) {
+        loadingPercentage.value = 100;
         generatedContent.value = response.data.data.summary;
         ElMessage.success("概要生成成功");
         isGenerated.value = true;
@@ -295,6 +356,7 @@ const generateContent = async () => {
     console.error("生成错误:", error);
     ElMessage.error("生成失败，请重试");
   } finally {
+    clearInterval(loadingInterval);
     isGenerating.value = false;
   }
 };
@@ -419,6 +481,7 @@ const copyToClipboard = async () => {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
 .function-title,
