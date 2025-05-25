@@ -102,7 +102,7 @@ const formatDetectionReason = (_: any, __: any, cellValue: string) => {
 
 // 时间格式化
 const formatDate = (_: any, __: any, cellValue: string) => {
-  return dayjs(cellValue).format("YYYY-MM-DD");
+  return dayjs(cellValue).format("YYYY-MM-DD  HH:mm:ss");
 };
 
 // 图片预览相关
