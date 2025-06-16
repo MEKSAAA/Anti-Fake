@@ -148,7 +148,8 @@ def get_detection_history(user_id):
             elif detection_type == 'text':
                 # 文本检测记录（图像路径为空）
                 query = query.filter(NewsDetectionHistory.image_path.is_(None))
-        
+            else:
+                return api_response(False, "无效的检测类型", status_code=400)
         # 按上传时间降序排序并获取结果
         history = query.order_by(NewsDetectionHistory.upload_date.desc()).all()
         

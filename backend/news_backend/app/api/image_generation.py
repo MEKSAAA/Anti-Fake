@@ -130,11 +130,16 @@ def generate_image():
                         # 下载并保存图片
                         image_path = save_generated_image(user_id, image_url, idx)
                         # 添加本地路径到结果中
-                        image_result['local_path'] = image_path
+                        static_root = "/root/news_backend/static/"
+                        if image_path.startswith(static_root):
+                            relative_path = image_path[len(static_root):]
+                            image_url = f"http://localhost:6006/static/{relative_path}"
+                            image_result['local_path'] = image_url
+
                         saved_images.append(image_result)
                         
                         # 收集所有图片路径
-                        image_paths_array.append(image_path)
+                        image_paths_array.append(image_url)
                     except Exception as e:
                         app.logger.error(f"保存图片失败: {str(e)}")
             

@@ -489,3 +489,60 @@ def find_password():
     except Exception as e:
         db.session.rollback()
         return api_response(False, f"密码更新失败: {str(e)}", status_code=500)
+
+
+@auth.route('/find_password_email', methods=['POST'])
+def find_password_email():
+    """
+    找回密码
+    
+    参数(JSON):
+        email (str): 用户邮箱
+        verification_code (str): 验证码
+        new_password (str): 新密码
+    
+    返回:
+        JSON: 包含用户ID的响应
+        
+    异常:
+        400: 参数不完整、验证码错误或邮箱不匹配
+        404: 用户不存在
+        500: 更新失败
+    """
+    data = request.json
+    if not data.get('email') or not data.get('verification_code'):
+        return api_response(False, "邮箱和验证码不能为空", status_code=400)
+    email=data.get('email')
+    new_password = data.get('new_password')
+    
+    if not new_password:
+        return api_response(False, "新密码不能为空", status_code=400)
+    
+    if len(new_password) < 6:
+        return api_response(False, "新密码长度不能少于6个字符", status_code=400)
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return api_response(False, "用户不存在,请先注册", status_code=404)
+    stored_code = VERIFICATION_CODES.get(email)
+    
+    if not stored_code:
+        return api_response(False, "请先获取验证码", status_code=400)
+    
+    if datetime.now() > stored_code['expires']:
+        del VERIFICATION_CODES[email]
+        return api_response(False, "验证码已过期", status_code=400)
+    
+    if data['verification_code'] != stored_code['code']:
+        return api_response(False, "验证码错误", status_code=400)
+    
+    user.password_hash = hash_password(new_password)
+    try:
+        db.session.commit()
+        del VERIFICATION_CODES[email]
+        return api_response(True, "密码更新成功", {
+            "user_id": user.user_id
+        })
+    except Exception as e:
+        db.session.rollback()
+        return api_response(False, f"密码更新失败: {str(e)}", status_code=500)
